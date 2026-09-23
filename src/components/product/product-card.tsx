@@ -2,11 +2,12 @@ import Image from "next/image";
 import Link from "next/link";
 import { AddToCartButton } from "@/components/cart/add-to-cart-button";
 import { CategoryGlyph, GridIcon } from "@/components/icons";
+import { WishlistHeart } from "@/components/wishlist/wishlist-button";
 import { money, stars } from "@/lib/format";
 import type { ProductCardData } from "@/lib/products";
 import { isCategoryIcon } from "@/lib/site-nav";
 
-// Product card (the prototype's .pc). The wishlist heart is wired in Phase 8.
+// Product card (the prototype's .pc).
 const badges = {
   sale: { label: "Sale", className: "bg-accent" },
   bulk: { label: "Bulk pricing", className: "bg-[#0f766e]" },
@@ -59,13 +60,7 @@ export function ProductCard({ product: p, index = 0 }: { product: ProductCardDat
             {badge.label}
           </b>
         )}
-        <button
-          type="button"
-          aria-label="Save to wishlist"
-          className="absolute top-2.5 right-2.5 z-[2] grid size-8 cursor-pointer place-items-center rounded-full bg-white text-15 text-[#c9ccd3] shadow-[0_4px_12px_#0002] transition hover:scale-110"
-        >
-          ♥
-        </button>
+        <WishlistHeart productId={p.cart.productId} />
       </div>
 
       <small className="text-12 text-muted">

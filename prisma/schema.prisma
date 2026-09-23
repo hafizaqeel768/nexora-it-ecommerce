@@ -173,13 +173,18 @@ model Review {
   @@index([productId])
 }
 
-/// Shop customer / admin. Auth.js tables are added in Phase 8.
+/// Shop customer / admin. Guest checkouts create a row without a password; registering sets one.
+/// Login is Auth.js credentials with JWT sessions, so no Auth.js Account/Session tables are needed.
 model Customer {
   id            String         @id @default(cuid())
   email         String         @unique
   name          String
   phone         String?
   role          Role           @default(CUSTOMER)
+  /// scrypt hash (src/lib/password.ts); null = guest, cannot log in
+  passwordHash  String?
+  /// When the account was registered; order history starts here (earlier guest orders stay hidden)
+  registeredAt  DateTime?
   addressLine   String?
   city          String?
   state         String?

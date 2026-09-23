@@ -23,6 +23,7 @@ nextjs-ecommerce/
 │   ├── HOME-PAGE.md                  ← all home page sections (completed after Phase 5)
 │   ├── PHASE-6-SHOP.md               ← shop listing + product pages report
 │   ├── PHASE-7-CART.md               ← cart, checkout, Stripe report
+│   ├── PHASE-8-ACCOUNTS.md           ← login/register, account, wishlist report
 │   └── kijero-products.json          ← real product catalog (299 entries) used by the seed
 ├── media/
 │   ├── products/                     ← real product photos

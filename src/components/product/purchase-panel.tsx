@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useState } from "react";
 import { AddToCartButton } from "@/components/cart/add-to-cart-button";
+import { SaveForLaterButton } from "@/components/wishlist/wishlist-button";
 import { money, stars } from "@/lib/format";
 import { lineUnitPrice, tierUnitPrice, type Tier } from "@/lib/pricing";
 
@@ -24,7 +25,6 @@ type Props = {
 };
 
 // Product info column (the prototype's .pinfo): live price for quantity/variant, bulk tiers, specs, buy row.
-// "Save for later" is wired in Phase 8.
 export function PurchasePanel(p: Props) {
   const [variant, setVariant] = useState(0);
   const [qty, setQty] = useState(1);
@@ -160,9 +160,7 @@ export function PurchasePanel(p: Props) {
         <Link href={`/?quote=${encodeURIComponent(p.slug)}#contact`} className={outline}>
           Request quote
         </Link>
-        <button type="button" className={outline}>
-          ♡ Save for later
-        </button>
+        <SaveForLaterButton productId={p.productId} className={outline} />
       </div>
 
       <div className="grid grid-cols-3 gap-2.5 text-12 text-muted">

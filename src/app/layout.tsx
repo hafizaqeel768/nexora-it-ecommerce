@@ -2,6 +2,8 @@ import type { Metadata, Viewport } from "next";
 import { CartDrawer } from "@/components/cart/cart-drawer";
 import { SiteFooter } from "@/components/layout/site-footer";
 import { SiteHeader } from "@/components/layout/site-header";
+import { WishlistProvider } from "@/components/wishlist/wishlist-provider";
+import { getViewer } from "@/lib/viewer";
 import "./globals.css";
 
 export const metadata: Metadata = {
@@ -16,18 +18,21 @@ export const viewport: Viewport = {
   colorScheme: "light",
 };
 
-export default function RootLayout({
+export default async function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  const viewer = await getViewer();
   return (
     <html lang="en">
       <body>
-        <SiteHeader />
-        {children}
-        <SiteFooter />
-        <CartDrawer />
+        <WishlistProvider signedIn={!!viewer} initialIds={viewer?.wishlistIds ?? []}>
+          <SiteHeader />
+          {children}
+          <SiteFooter />
+          <CartDrawer />
+        </WishlistProvider>
       </body>
     </html>
   );

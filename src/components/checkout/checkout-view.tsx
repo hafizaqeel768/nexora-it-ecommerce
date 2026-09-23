@@ -20,7 +20,15 @@ const payments = [
 ] as const;
 
 // Checkout (the prototype's checkout()). The server re-prices the cart; card payments continue on Stripe.
-export function CheckoutView({ cardEnabled, canceled }: { cardEnabled: boolean; canceled: boolean }) {
+export function CheckoutView({
+  cardEnabled,
+  canceled,
+  prefill,
+}: {
+  cardEnabled: boolean;
+  canceled: boolean;
+  prefill: Partial<Record<"name" | "email" | "phone" | "line" | "city" | "state" | "postalCode" | "country", string>>;
+}) {
   const router = useRouter();
   const { lines, promo, clear } = useCart();
   const [payment, setPayment] = useState<CheckoutInput["payment"]>(cardEnabled ? "card" : "purchase_order");
@@ -78,7 +86,7 @@ export function CheckoutView({ cardEnabled, canceled }: { cardEnabled: boolean; 
         name={name}
         type={opts.type ?? "text"}
         required={opts.required}
-        defaultValue={opts.defaultValue}
+        defaultValue={prefill[name as keyof typeof prefill] || opts.defaultValue}
         autoComplete={opts.autoComplete}
         aria-invalid={!!fields[name]}
       />

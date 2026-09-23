@@ -1,28 +1,22 @@
 import Link from "next/link";
+import { logout } from "@/app/actions/account";
 import { CartButton } from "@/components/cart/cart-button";
-import { ChatIcon, HeartIcon, SearchIcon } from "@/components/icons";
+import { ChatIcon, SearchIcon } from "@/components/icons";
 import { CategoryMenu } from "@/components/layout/category-menu";
+import { WishlistHeaderLink } from "@/components/wishlist/wishlist-button";
+import { db } from "@/lib/db";
 import { mainNav } from "@/lib/site-nav";
+import { accountOrdersWhere, getViewer } from "@/lib/viewer";
 
-// Static header from the prototype: top bar, logo/search/wishlist/cart row, and the sticky red nav.
-// The wishlist count is a placeholder until Phase 8.
-const wishlistCount = 0;
-
+// Header from the prototype: top bar (login/register, or name · orders · logout), logo/search/wishlist/cart row,
+// and the sticky red nav.
 const topLink =
   "inline-flex items-center gap-2 border-l border-header-line px-3 py-1.5 text-header-link transition-colors hover:text-accent";
 
-function Badge({ count, className = "" }: { count: number; className?: string }) {
-  if (count === 0) return null;
-  return (
-    <span
-      className={`absolute grid place-items-center rounded-pill border-2 border-white bg-accent font-bold text-white ${className}`}
-    >
-      {count}
-    </span>
-  );
-}
+export async function SiteHeader() {
+  const viewer = await getViewer();
+  const orderCount = viewer ? await db.order.count({ where: accountOrdersWhere(viewer) }) : 0;
 
-export function SiteHeader() {
   return (
     <>
       <header className="relative z-40 border-b border-header-line bg-white text-header-ink">
@@ -38,12 +32,30 @@ export function SiteHeader() {
               <Link href="/#contact" className={`${topLink} pl-3.5`}>
                 <ChatIcon className="size-4 stroke-accent" /> Live-Chat
               </Link>
-              <Link href="/login" className={topLink}>
-                Login
-              </Link>
-              <Link href="/register" className={topLink}>
-                Register
-              </Link>
+              {viewer ? (
+                <>
+                  <Link href="/account?t=profile" className={`${topLink} max-w-[180px] truncate`}>
+                    {viewer.name}
+                  </Link>
+                  <Link href="/account" className={topLink}>
+                    Orders ({orderCount})
+                  </Link>
+                  <form action={logout} className="contents">
+                    <button type="submit" className={`${topLink} cursor-pointer`}>
+                      Logout
+                    </button>
+                  </form>
+                </>
+              ) : (
+                <>
+                  <Link href="/login" className={topLink}>
+                    Login
+                  </Link>
+                  <Link href="/register" className={topLink}>
+                    Register
+                  </Link>
+                </>
+              )}
             </span>
           </div>
         </div>
@@ -79,14 +91,10 @@ export function SiteHeader() {
             </button>
           </form>
 
-          <Link
-            href="/wishlist"
-            aria-label="Wishlist"
+          <WishlistHeaderLink
             className="relative mr-2 grid size-[42px] flex-none place-items-center rounded-8 border border-header-control bg-white text-header-ink transition-colors hover:border-accent hover:bg-accent hover:text-white max-md:order-2 max-md:ml-auto"
-          >
-            <HeartIcon className="size-5" />
-            <Badge count={wishlistCount} className="-top-[5px] -right-[5px] h-[18px] min-w-[18px] px-1 text-[10.5px]" />
-          </Link>
+            badgeClassName="absolute -top-[5px] -right-[5px] grid h-[18px] min-w-[18px] place-items-center rounded-pill border-2 border-white bg-accent px-1 text-[10.5px] font-bold text-white"
+          />
 
           <CartButton />
         </div>

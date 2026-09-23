@@ -2,6 +2,7 @@
 
 import { randomInt } from "node:crypto";
 import { headers } from "next/headers";
+import { auth } from "@/auth";
 import { PaymentMethod, Prisma } from "@/generated/prisma/client";
 import { db } from "@/lib/db";
 import { cartTotals, lineUnitPrice } from "@/lib/pricing";
@@ -41,6 +42,48 @@ class CheckoutError extends Error {}
 
 const clean = (s: unknown, max: number) => String(s ?? "").trim().slice(0, max);
 
+type Tx = Prisma.TransactionClient;
+type Contact = { name: string; email: string; phone: string };
+type Address = { line: string; city: string; state: string; postalCode: string; country: string };
+
+/**
+ * Signed in: the order belongs to the account, and the first shipping address is saved to it.
+ * Guest: the order is kept under a guest customer row for that email, but never under a registered
+ * account (only its owner, signed in, can add orders to it).
+ */
+async function orderCustomerId(tx: Tx, accountId: string | null, contact: Contact, address: Address) {
+  const account = accountId
+    ? await tx.customer.findFirst({ where: { id: accountId, passwordHash: { not: null } }, select: { id: true, addressLine: true } })
+    : null;
+  if (account) {
+    if (!account.addressLine) {
+      await tx.customer.update({
+        where: { id: account.id },
+        data: { addressLine: address.line, city: address.city, state: address.state, postalCode: address.postalCode, country: address.country },
+      });
+    }
+    return account.id;
+  }
+
+  const email = contact.email.toLowerCase();
+  const row = await tx.customer.upsert({
+    where: { email },
+    create: {
+      email,
+      name: contact.name,
+      phone: contact.phone || null,
+      addressLine: address.line,
+      city: address.city,
+      state: address.state,
+      postalCode: address.postalCode,
+      country: address.country,
+    },
+    update: {},
+    select: { id: true, passwordHash: true },
+  });
+  return row.passwordHash ? null : row.id;
+}
+
 /**
  * Creates the order from the cart. Prices, stock and the coupon are re-checked from the database;
  * the browser only says which products and how many. Card payments then go to Stripe Checkout.
@@ -69,6 +112,8 @@ export async function placeOrder(input: CheckoutInput): Promise<CheckoutResult> 
 
   const lines = (input.lines ?? []).filter((l) => Number.isInteger(l.quantity) && l.quantity > 0 && l.quantity <= 10000);
   if (!lines.length) return { error: "Your cart is empty." };
+
+  const accountId = (await auth())?.user?.id ?? null;
 
   let order: { id: string; number: string; total: Prisma.Decimal };
   try {
@@ -113,20 +158,7 @@ export async function placeOrder(input: CheckoutInput): Promise<CheckoutResult> 
         }
       }
 
-      const customer = await tx.customer.upsert({
-        where: { email: contact.email.toLowerCase() },
-        create: {
-          email: contact.email.toLowerCase(),
-          name: contact.name,
-          phone: contact.phone || null,
-          addressLine: address.line,
-          city: address.city,
-          state: address.state,
-          postalCode: address.postalCode,
-          country: address.country,
-        },
-        update: {},
-      });
+      const customerId = await orderCustomerId(tx, accountId, contact, address);
 
       for (let attempt = 0; attempt < 5; attempt++) {
         const number = `NX-${randomInt(100000, 1000000)}`;
@@ -134,7 +166,7 @@ export async function placeOrder(input: CheckoutInput): Promise<CheckoutResult> 
         return tx.order.create({
           data: {
             number,
-            customerId: customer.id,
+            customerId,
             name: contact.name,
             email: contact.email,
             phone: contact.phone || null,
