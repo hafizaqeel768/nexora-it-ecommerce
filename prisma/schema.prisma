@@ -1,0 +1,282 @@
+// Nexora IT — data model (Phase 5).
+// Shapes follow design/nexora-full-with-admin.html (products, variants, bulk tiers, reviews, orders,
+// quotes, coupons, wishlist) and docs/kijero-products.json (the real catalog).
+
+generator client {
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+enum ProductStatus {
+  ACTIVE
+  DRAFT
+}
+
+enum ProductCondition {
+  NEW
+  USED
+  REFURBISHED
+}
+
+enum Availability {
+  IN_STOCK
+  OUT_OF_STOCK
+  BACKORDER
+}
+
+enum Role {
+  CUSTOMER
+  ADMIN
+}
+
+enum OrderStatus {
+  PENDING
+  PROCESSING
+  SHIPPED
+  DELIVERED
+  CANCELLED
+}
+
+enum PaymentMethod {
+  CREDIT_CARD
+  PURCHASE_ORDER
+  BANK_TRANSFER
+}
+
+enum QuoteStatus {
+  NEW
+  CONTACTED
+  WON
+  CLOSED
+}
+
+/// Two levels: top-level (site nav) → subcategories (from the catalog JSON).
+model Category {
+  id          String     @id @default(cuid())
+  slug        String     @unique
+  name        String
+  description String?
+  /// Public path, e.g. /media/category/monitors.webp
+  image       String?
+  sortOrder   Int        @default(0)
+  parentId    String?
+  parent      Category?  @relation("CategoryTree", fields: [parentId], references: [id], onDelete: Restrict)
+  children    Category[] @relation("CategoryTree")
+  products    Product[]
+  quotes      Quote[]
+  createdAt   DateTime   @default(now())
+  updatedAt   DateTime   @updatedAt
+
+  @@index([parentId])
+}
+
+model Product {
+  id               String           @id @default(cuid())
+  slug             String           @unique
+  sku              String?          @unique
+  mpn              String?
+  name             String
+  brand            String
+  categoryId       String
+  category         Category         @relation(fields: [categoryId], references: [id], onDelete: Restrict)
+  price            Decimal          @db.Decimal(10, 2)
+  /// Previous price, shown struck through ("old" in the prototype)
+  compareAtPrice   Decimal?         @db.Decimal(10, 2)
+  currency         String           @default("USD")
+  /// null = quantity not tracked (catalog import has availability only)
+  stock            Int?
+  availability     Availability     @default(IN_STOCK)
+  condition        ProductCondition @default(NEW)
+  status           ProductStatus    @default(ACTIVE)
+  shortDescription String?
+  description      String?
+  /// Raw HTML from the catalog source — sanitize before rendering
+  descriptionHtml  String?
+  /// Ordered [{ label, value }]
+  specs            Json?
+  /// { length, width, height, weight } as given by the source, e.g. "4.4 in"
+  packaging        Json?
+  /// Main image, public path under /media
+  image            String?
+  /// Additional images (public paths)
+  gallery          String[]         @default([])
+  /// Cached average of reviews (prototype "r")
+  rating           Decimal?         @db.Decimal(2, 1)
+  /// Prototype demo product — easy to find and remove
+  isSample         Boolean          @default(false)
+  sourceUrl        String?
+  variants         Variant[]
+  priceTiers       PriceTier[]
+  reviews          Review[]
+  orderItems       OrderItem[]
+  wishlistItems    WishlistItem[]
+  createdAt        DateTime         @default(now())
+  updatedAt        DateTime         @updatedAt
+
+  @@index([categoryId])
+  @@index([brand])
+  @@index([status])
+}
+
+/// Selectable option with a price delta, e.g. "Storage: 1TB SSD (+$130)".
+model Variant {
+  id         String      @id @default(cuid())
+  productId  String
+  product    Product     @relation(fields: [productId], references: [id], onDelete: Cascade)
+  /// Option group label, e.g. "Memory / Storage"
+  attribute  String
+  name       String
+  priceDelta Decimal     @default(0) @db.Decimal(10, 2)
+  sku        String?
+  stock      Int?
+  sortOrder  Int         @default(0)
+  orderItems OrderItem[]
+
+  @@index([productId])
+}
+
+/// Bulk pricing: quantities minQty..maxQty pay price × multiplier.
+model PriceTier {
+  id         String  @id @default(cuid())
+  productId  String
+  product    Product @relation(fields: [productId], references: [id], onDelete: Cascade)
+  minQty     Int
+  /// null = no upper bound
+  maxQty     Int?
+  multiplier Decimal @db.Decimal(4, 3)
+
+  @@unique([productId, minQty])
+}
+
+model Review {
+  id         String    @id @default(cuid())
+  productId  String
+  product    Product   @relation(fields: [productId], references: [id], onDelete: Cascade)
+  customerId String?
+  customer   Customer? @relation(fields: [customerId], references: [id], onDelete: SetNull)
+  authorName String
+  rating     Int
+  body       String
+  approved   Boolean   @default(true)
+  createdAt  DateTime  @default(now())
+
+  @@index([productId])
+}
+
+/// Shop customer / admin. Auth.js tables are added in Phase 8.
+model Customer {
+  id            String         @id @default(cuid())
+  email         String         @unique
+  name          String
+  phone         String?
+  role          Role           @default(CUSTOMER)
+  addressLine   String?
+  city          String?
+  state         String?
+  postalCode    String?
+  country       String?
+  orders        Order[]
+  reviews       Review[]
+  wishlistItems WishlistItem[]
+  quotes        Quote[]
+  createdAt     DateTime       @default(now())
+  updatedAt     DateTime       @updatedAt
+}
+
+model WishlistItem {
+  id         String   @id @default(cuid())
+  customerId String
+  customer   Customer @relation(fields: [customerId], references: [id], onDelete: Cascade)
+  productId  String
+  product    Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
+  createdAt  DateTime @default(now())
+
+  @@unique([customerId, productId])
+}
+
+model Order {
+  id            String        @id @default(cuid())
+  /// Human-readable, e.g. NX-100240
+  number        String        @unique
+  customerId    String?
+  customer      Customer?     @relation(fields: [customerId], references: [id], onDelete: SetNull)
+  name          String
+  email         String
+  phone         String?
+  addressLine   String
+  city          String
+  state         String
+  postalCode    String
+  country       String
+  paymentMethod PaymentMethod
+  status        OrderStatus   @default(PENDING)
+  couponCode    String?
+  subtotal      Decimal       @db.Decimal(10, 2)
+  discount      Decimal       @default(0) @db.Decimal(10, 2)
+  shippingFee   Decimal       @default(0) @db.Decimal(10, 2)
+  tax           Decimal       @default(0) @db.Decimal(10, 2)
+  total         Decimal       @db.Decimal(10, 2)
+  items         OrderItem[]
+  quote         Quote?
+  createdAt     DateTime      @default(now())
+  updatedAt     DateTime      @updatedAt
+
+  @@index([customerId])
+  @@index([status])
+}
+
+/// Snapshot of what was bought; product/variant links survive deletion as null.
+model OrderItem {
+  id        String   @id @default(cuid())
+  orderId   String
+  order     Order    @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  productId String?
+  product   Product? @relation(fields: [productId], references: [id], onDelete: SetNull)
+  variantId String?
+  variant   Variant? @relation(fields: [variantId], references: [id], onDelete: SetNull)
+  name      String
+  sku       String?
+  unitPrice Decimal  @db.Decimal(10, 2)
+  quantity  Int
+  lineTotal Decimal  @db.Decimal(10, 2)
+
+  @@index([orderId])
+}
+
+model Coupon {
+  id         String   @id @default(cuid())
+  code       String   @unique
+  percentOff Int
+  active     Boolean  @default(true)
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+}
+
+model Quote {
+  id         String      @id @default(cuid())
+  /// Human-readable, e.g. QT-48211
+  number     String      @unique
+  customerId String?
+  customer   Customer?   @relation(fields: [customerId], references: [id], onDelete: SetNull)
+  name       String
+  company    String?
+  email      String
+  phone      String?
+  categoryId String?
+  category   Category?   @relation(fields: [categoryId], references: [id], onDelete: SetNull)
+  /// Free text as entered, e.g. "40"
+  quantity   String?
+  message    String
+  status     QuoteStatus @default(NEW)
+  /// Set when the quote is converted to an order
+  orderId    String?     @unique
+  order      Order?      @relation(fields: [orderId], references: [id], onDelete: SetNull)
+  createdAt  DateTime    @default(now())
+  updatedAt  DateTime    @updatedAt
+
+  @@index([status])
+}

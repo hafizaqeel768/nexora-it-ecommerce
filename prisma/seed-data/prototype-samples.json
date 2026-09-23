@@ -1,0 +1,699 @@
+{
+  "source": "design/nexora-full-with-admin.html",
+  "products": [
+    {
+      "id": 1,
+      "name": "Dell OptiPlex 7020 Micro Desktop",
+      "brand": "Dell",
+      "category": "Computers",
+      "price": 749,
+      "oldPrice": 829,
+      "rating": 4.6,
+      "stock": 24,
+      "image": null,
+      "description": "Ultra-compact business desktop with vPro management, ideal for offices and classrooms.",
+      "specs": [
+        [
+          "Processor",
+          "Intel Core i5-14500T"
+        ],
+        [
+          "Memory",
+          "16 GB DDR5"
+        ],
+        [
+          "Storage",
+          "512 GB NVMe SSD"
+        ],
+        [
+          "OS",
+          "Windows 11 Pro"
+        ],
+        [
+          "Warranty",
+          "3 years"
+        ]
+      ]
+    },
+    {
+      "id": 2,
+      "name": "HP EliteBook 840 G10 Laptop",
+      "brand": "HP",
+      "category": "Computers",
+      "price": 1299,
+      "oldPrice": null,
+      "rating": 4.7,
+      "stock": 12,
+      "image": null,
+      "description": "Premium 14-inch business laptop with all-day battery and enterprise security.",
+      "specs": [
+        [
+          "Display",
+          "14\" WUXGA IPS"
+        ],
+        [
+          "Processor",
+          "Intel Core i7-1355U"
+        ],
+        [
+          "Memory",
+          "16 GB LPDDR5"
+        ],
+        [
+          "Storage",
+          "512 GB SSD"
+        ],
+        [
+          "Weight",
+          "1.36 kg"
+        ]
+      ]
+    },
+    {
+      "id": 3,
+      "name": "Lenovo ThinkPad T14 Gen 4",
+      "brand": "Lenovo",
+      "category": "Computers",
+      "price": 1149,
+      "oldPrice": 1249,
+      "rating": 4.8,
+      "stock": 3,
+      "image": null,
+      "description": "Legendary keyboard and rugged build for professionals on the move.",
+      "specs": [
+        [
+          "Display",
+          "14\" FHD anti-glare"
+        ],
+        [
+          "Processor",
+          "AMD Ryzen 7 PRO"
+        ],
+        [
+          "Memory",
+          "32 GB DDR5"
+        ],
+        [
+          "Storage",
+          "1 TB SSD"
+        ],
+        [
+          "Battery",
+          "Up to 15 h"
+        ]
+      ]
+    },
+    {
+      "id": 4,
+      "name": "Lenovo Tab P12 Pro Tablet",
+      "brand": "Lenovo",
+      "category": "Tablets",
+      "price": 549,
+      "oldPrice": null,
+      "rating": 4.4,
+      "stock": 30,
+      "image": null,
+      "description": "12.7-inch AMOLED tablet with stylus support for work and creative tasks.",
+      "specs": [
+        [
+          "Display",
+          "12.7\" 3K AMOLED"
+        ],
+        [
+          "Storage",
+          "256 GB"
+        ],
+        [
+          "Memory",
+          "8 GB RAM"
+        ],
+        [
+          "Connectivity",
+          "Wi-Fi 6E"
+        ],
+        [
+          "Battery",
+          "10200 mAh"
+        ]
+      ]
+    },
+    {
+      "id": 5,
+      "name": "Samsung Galaxy Tab Active5 Rugged",
+      "brand": "Samsung",
+      "category": "Tablets",
+      "price": 629,
+      "oldPrice": null,
+      "rating": 4.5,
+      "stock": 18,
+      "image": null,
+      "description": "Rugged field tablet with IP68 rating and a removable battery.",
+      "specs": [
+        [
+          "Display",
+          "8\" TFT"
+        ],
+        [
+          "Rating",
+          "IP68 / MIL-STD-810H"
+        ],
+        [
+          "Storage",
+          "128 GB"
+        ],
+        [
+          "Battery",
+          "Removable 5050 mAh"
+        ],
+        [
+          "Connectivity",
+          "5G + Wi-Fi 6"
+        ]
+      ]
+    },
+    {
+      "id": 6,
+      "name": "Dell UltraSharp U2724D 27\" QHD",
+      "brand": "Dell",
+      "category": "Monitors",
+      "price": 429,
+      "oldPrice": 499,
+      "rating": 4.8,
+      "stock": 40,
+      "image": "mon",
+      "description": "Color-accurate 27-inch QHD monitor with USB hub and ComfortView Plus.",
+      "specs": [
+        [
+          "Resolution",
+          "2560 x 1440"
+        ],
+        [
+          "Panel",
+          "IPS Black"
+        ],
+        [
+          "Refresh",
+          "120 Hz"
+        ],
+        [
+          "Ports",
+          "HDMI, DP, USB-C 90W"
+        ],
+        [
+          "Warranty",
+          "3 years"
+        ]
+      ]
+    },
+    {
+      "id": 7,
+      "name": "LG 34WQ75C 34\" Ultrawide",
+      "brand": "LG",
+      "category": "Monitors",
+      "price": 379,
+      "oldPrice": null,
+      "rating": 4.5,
+      "stock": 15,
+      "image": "mon",
+      "description": "Curved ultrawide display for multitasking, with built-in KVM.",
+      "specs": [
+        [
+          "Resolution",
+          "3440 x 1440"
+        ],
+        [
+          "Panel",
+          "IPS curved 1800R"
+        ],
+        [
+          "Refresh",
+          "100 Hz"
+        ],
+        [
+          "Ports",
+          "HDMI, DP, USB-C 90W"
+        ],
+        [
+          "HDR",
+          "HDR10"
+        ]
+      ]
+    },
+    {
+      "id": 8,
+      "name": "Netgear M4250 40-Port PoE+ Switch",
+      "brand": "Netgear",
+      "category": "Networking",
+      "price": 2103.54,
+      "oldPrice": null,
+      "rating": 4.7,
+      "stock": 6,
+      "image": null,
+      "description": "Managed AV-over-IP switch with 480W PoE+ budget and SFP uplinks.",
+      "specs": [
+        [
+          "Ports",
+          "40 x 1G PoE+ + 8 SFP"
+        ],
+        [
+          "PoE budget",
+          "480 W"
+        ],
+        [
+          "Type",
+          "Layer 2/3 managed"
+        ],
+        [
+          "Mounting",
+          "1U rack"
+        ],
+        [
+          "Warranty",
+          "Lifetime"
+        ]
+      ]
+    },
+    {
+      "id": 9,
+      "name": "TP-Link Omada EAP670 Wi-Fi 6 AP",
+      "brand": "TP-Link",
+      "category": "Networking",
+      "price": 179,
+      "oldPrice": 209,
+      "rating": 4.6,
+      "stock": 55,
+      "image": null,
+      "description": "Ceiling-mount Wi-Fi 6 access point with 2.5G uplink and cloud management.",
+      "specs": [
+        [
+          "Standard",
+          "Wi-Fi 6 AX5400"
+        ],
+        [
+          "Uplink",
+          "2.5 GbE PoE+"
+        ],
+        [
+          "Coverage",
+          "Up to 150 m2"
+        ],
+        [
+          "Management",
+          "Omada Cloud"
+        ],
+        [
+          "Mounting",
+          "Ceiling / wall"
+        ]
+      ]
+    },
+    {
+      "id": 10,
+      "name": "Ubiquiti UniFi Dream Machine Pro",
+      "brand": "Ubiquiti",
+      "category": "Networking",
+      "price": 379,
+      "oldPrice": null,
+      "rating": 4.5,
+      "stock": 9,
+      "image": null,
+      "description": "All-in-one security gateway and network controller for growing teams.",
+      "specs": [
+        [
+          "WAN",
+          "10G SFP+ / GbE"
+        ],
+        [
+          "Ports",
+          "8 x GbE + 2 x 10G SFP+"
+        ],
+        [
+          "Throughput",
+          "3.5 Gbps IPS"
+        ],
+        [
+          "Storage",
+          "HDD bay for Protect"
+        ],
+        [
+          "Mounting",
+          "1U rack"
+        ]
+      ]
+    },
+    {
+      "id": 11,
+      "name": "Advantech ARK-1123 IoT Gateway",
+      "brand": "Advantech",
+      "category": "IoT",
+      "price": 689,
+      "oldPrice": null,
+      "rating": 4.4,
+      "stock": 11,
+      "image": null,
+      "description": "Fanless industrial edge computer for factory sensors and data collection.",
+      "specs": [
+        [
+          "Processor",
+          "Intel Atom x6413E"
+        ],
+        [
+          "Ports",
+          "2 x LAN, 4 x USB, 2 x COM"
+        ],
+        [
+          "Temperature",
+          "-20 to 60 C"
+        ],
+        [
+          "Power",
+          "9-36 V DC"
+        ],
+        [
+          "Certs",
+          "CE, FCC"
+        ]
+      ]
+    },
+    {
+      "id": 12,
+      "name": "Linksys AX5400 Mesh Wi-Fi 6 Router",
+      "brand": "Linksys",
+      "category": "Networking",
+      "price": 249,
+      "oldPrice": 299,
+      "rating": 4.2,
+      "stock": 2,
+      "image": null,
+      "description": "Tri-band mesh router that keeps small offices connected without dead zones.",
+      "specs": [
+        [
+          "Standard",
+          "Wi-Fi 6 AX5400"
+        ],
+        [
+          "Bands",
+          "Tri-band"
+        ],
+        [
+          "Coverage",
+          "Up to 300 m2"
+        ],
+        [
+          "Ports",
+          "4 x GbE"
+        ],
+        [
+          "Security",
+          "WPA3"
+        ]
+      ]
+    },
+    {
+      "id": 13,
+      "name": "CyberPower LCD Line-Interactive UPS 1500VA",
+      "brand": "CyberPower",
+      "category": "Power",
+      "price": 189,
+      "oldPrice": 219,
+      "rating": 4.6,
+      "stock": 22,
+      "image": "ups",
+      "description": "Line-interactive UPS with LCD panel and AVR that protects PCs and network gear from outages and surges.",
+      "specs": [
+        [
+          "Capacity",
+          "1500 VA / 900 W"
+        ],
+        [
+          "Outlets",
+          "12 (6 battery backup)"
+        ],
+        [
+          "Topology",
+          "Line-interactive, AVR"
+        ],
+        [
+          "Display",
+          "Multifunction LCD"
+        ],
+        [
+          "Warranty",
+          "3 years"
+        ]
+      ]
+    },
+    {
+      "id": 14,
+      "name": "Ubiquiti airMAX PowerBeam 5AC Wireless Bridge",
+      "brand": "Ubiquiti",
+      "category": "Networking",
+      "price": 129,
+      "oldPrice": null,
+      "rating": 4.5,
+      "stock": 34,
+      "image": "wifi",
+      "description": "High-gain 5 GHz point-to-point bridge for long-range links between buildings.",
+      "specs": [
+        [
+          "Frequency",
+          "5 GHz airMAX AC"
+        ],
+        [
+          "Gain",
+          "25 dBi"
+        ],
+        [
+          "Throughput",
+          "450+ Mbps"
+        ],
+        [
+          "Range",
+          "Up to 20 km"
+        ],
+        [
+          "Power",
+          "24V PoE"
+        ]
+      ]
+    }
+  ],
+  "variants": {
+    "1": {
+      "label": "Memory / Storage",
+      "opts": [
+        {
+          "n": "16GB RAM / 512GB SSD",
+          "dp": 0
+        },
+        {
+          "n": "32GB RAM / 1TB SSD",
+          "dp": 180
+        }
+      ]
+    },
+    "2": {
+      "label": "Storage",
+      "opts": [
+        {
+          "n": "512GB SSD",
+          "dp": 0
+        },
+        {
+          "n": "1TB SSD",
+          "dp": 130
+        }
+      ]
+    },
+    "3": {
+      "label": "Memory",
+      "opts": [
+        {
+          "n": "16GB RAM",
+          "dp": 0
+        },
+        {
+          "n": "32GB RAM",
+          "dp": 150
+        }
+      ]
+    },
+    "4": {
+      "label": "Storage",
+      "opts": [
+        {
+          "n": "128GB",
+          "dp": 0
+        },
+        {
+          "n": "256GB",
+          "dp": 80
+        }
+      ]
+    }
+  },
+  "tiers": {
+    "8": [
+      [
+        1,
+        2,
+        1
+      ],
+      [
+        3,
+        5,
+        0.95
+      ],
+      [
+        6,
+        999,
+        0.88
+      ]
+    ],
+    "9": [
+      [
+        1,
+        9,
+        1
+      ],
+      [
+        10,
+        24,
+        0.92
+      ],
+      [
+        25,
+        999,
+        0.85
+      ]
+    ],
+    "10": [
+      [
+        1,
+        2,
+        1
+      ],
+      [
+        3,
+        5,
+        0.9
+      ],
+      [
+        6,
+        999,
+        0.82
+      ]
+    ],
+    "13": [
+      [
+        1,
+        3,
+        1
+      ],
+      [
+        4,
+        9,
+        0.93
+      ],
+      [
+        10,
+        999,
+        0.85
+      ]
+    ]
+  },
+  "reviewNames": [
+    "Alex P.",
+    "Jordan K.",
+    "Sam R.",
+    "Taylor M.",
+    "Casey W.",
+    "Morgan L.",
+    "Riley T.",
+    "Jamie F."
+  ],
+  "reviewTexts": [
+    "Works exactly as described, great value for the price.",
+    "Setup was quick and it has been reliable so far.",
+    "Solid build quality, would buy again for the office.",
+    "Does the job well, shipping was fast too.",
+    "Exceeded expectations for this price range.",
+    "A bit pricier than expected but the quality is there."
+  ],
+  "coupons": [
+    {
+      "code": "NEXORA10",
+      "pct": 10,
+      "on": 1
+    },
+    {
+      "code": "WELCOME5",
+      "pct": 5,
+      "on": 1
+    }
+  ],
+  "quotes": [
+    {
+      "no": "QT-48211",
+      "name": "Grace Miller",
+      "company": "Lincoln High School",
+      "email": "grace@lincoln.edu",
+      "phone": "(555) 010-7788",
+      "cat": "Computers",
+      "qty": "40",
+      "msg": "Need 40 laptops for the new computer lab.",
+      "status": "New"
+    },
+    {
+      "no": "QT-39002",
+      "name": "Omar Diaz",
+      "company": "Diaz Logistics",
+      "email": "omar@diazlog.com",
+      "phone": "(555) 010-4410",
+      "cat": "Networking",
+      "qty": "12",
+      "msg": "Switches and access points for a new warehouse.",
+      "status": "Contacted"
+    },
+    {
+      "no": "QT-27716",
+      "name": "Priya Shah",
+      "company": "City Clinic",
+      "email": "priya@cityclinic.org",
+      "phone": "(555) 010-9021",
+      "cat": "Power",
+      "qty": "8",
+      "msg": "UPS units for server closets.",
+      "status": "Won"
+    }
+  ],
+  "demoOrders": {
+    "names": [
+      "Ava Johnson",
+      "Liam Smith",
+      "Noah Brown",
+      "Emma Davis",
+      "Olivia Wilson",
+      "Mason Clark",
+      "Sophia Lewis",
+      "Lucas Hall",
+      "Mia Young",
+      "Ethan King"
+    ],
+    "statuses": [
+      "Delivered",
+      "Delivered",
+      "Shipped",
+      "Processing",
+      "Pending",
+      "Delivered",
+      "Cancelled"
+    ],
+    "payments": [
+      "Credit card",
+      "Purchase order",
+      "Bank transfer"
+    ],
+    "count": 24
+  }
+}

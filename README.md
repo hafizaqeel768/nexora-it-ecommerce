@@ -2,23 +2,20 @@ This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-
 
 ## Getting Started
 
-First, run the development server:
+Development runs in Docker (see `docs/DOCKERIZATION.md`). First time: `cp .env.example .env` and set a password.
 
 ```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+docker compose up -d          # start nexora_app (Next.js) + nexora_pg (PostgreSQL)
+docker compose logs -f app    # follow the Next.js dev server
+docker compose stop           # stop both (data is kept)
 ```
 
 Open [http://localhost:3100](http://localhost:3100) with your browser to see the result.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+Run project commands inside the app container, e.g. `docker compose exec app npm run lint`.
+Don't run `npm run dev` directly in WSL: port 3100 belongs to `nexora_app`.
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+You can start editing the page by modifying `src/app/page.tsx`. The page auto-updates as you edit the file.
 
 ## Learn More
 

@@ -7,9 +7,16 @@
     "build": "next build --turbopack",
     "start": "next start -p 3100",
     "lint": "eslint",
-    "media:slugify": "node scripts/slugify-media.mjs"
+    "media:slugify": "node scripts/slugify-media.mjs",
+    "db:generate": "prisma generate",
+    "db:migrate": "prisma migrate dev",
+    "db:seed": "prisma db seed",
+    "db:studio": "node scripts/studio.mjs",
+    "dev:docker": "prisma generate && next dev --turbopack -p 3100 --hostname 0.0.0.0"
   },
   "dependencies": {
+    "@prisma/adapter-pg": "7.10.0",
+    "@prisma/client": "7.10.0",
     "next": "15.5.26",
     "react": "19.1.0",
     "react-dom": "19.1.0"
@@ -22,7 +29,9 @@
     "@types/react-dom": "^19",
     "eslint": "^9",
     "eslint-config-next": "15.5.26",
+    "prisma": "7.10.0",
     "tailwindcss": "^4",
+    "tsx": "4.23.15",
     "typescript": "^5"
   },
   "engines": {

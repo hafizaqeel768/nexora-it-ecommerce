@@ -7,7 +7,8 @@ export type CategoryIcon =
   | "monitors"
   | "networking"
   | "power"
-  | "iot";
+  | "iot"
+  | "audio-conferencing";
 
 export type Category = {
   slug: CategoryIcon;
@@ -22,9 +23,12 @@ export const categories: Category[] = [
   { slug: "networking", name: "Networking" },
   { slug: "power", name: "Power", footerName: "Power & UPS" },
   { slug: "iot", name: "IoT" },
+  { slug: "audio-conferencing", name: "Audio & Conferencing" },
 ];
 
 export const categoryHref = (slug: string) => `/shop?category=${slug}`;
+
+export const isCategoryIcon = (slug: string): slug is CategoryIcon => categories.some((c) => c.slug === slug);
 
 export const mainNav = [
   { label: "ABOUT US", href: "/#about" },

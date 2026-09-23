@@ -1,8 +1,36 @@
-# Nexora IT — backend services only. The Next.js dev server runs natively in WSL (npm run dev, port 3100).
+# Nexora IT — development environment. `docker compose up -d` starts everything:
+#   app → nexora_app (Next.js dev server, http://localhost:3100)
+#   db  → nexora_pg  (PostgreSQL 17, 127.0.0.1:5432)
+# Service keys (app, db) are scoped to this project; all Docker-level names carry the nexora_ prefix.
 # Names and ports verified free in docs/PHASE-0-ENVIRONMENT.md. Credentials come from .env (git-ignored).
 name: nexora
 
 services:
+  app:
+    build: .
+    image: nexora_app:dev
+    container_name: nexora_app
+    restart: unless-stopped
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      # Inside Docker the database is reached by container name, not localhost.
+      DATABASE_URL: postgresql://${POSTGRES_USER:?set in .env}:${POSTGRES_PASSWORD:?set in .env}@nexora_pg:5432/${POSTGRES_DB:?set in .env}?schema=public
+    # Regenerates the (git-ignored) Prisma client, then starts the Next.js dev server.
+    command: npm run dev:docker
+    ports:
+      - "127.0.0.1:3100:3100"
+      - "127.0.0.1:5555:5555" # Prisma Studio: docker compose exec app npm run db:studio
+    volumes:
+      # Source code from WSL (hot reload). node_modules and .next stay in Docker volumes,
+      # so they never mix with the WSL copies.
+      - .:/app
+      - nexora_app_node_modules:/app/node_modules
+      - nexora_app_next:/app/.next
+    networks:
+      - nexora_network
+
   db:
     image: postgres:17-alpine
     container_name: nexora_pg
@@ -14,9 +42,9 @@ services:
     ports:
       - "127.0.0.1:${POSTGRES_PORT:-5432}:5432"
     volumes:
-      - nexora_pg_data:/var/lib/postgresql/data
+      - nexora_postgres_data:/var/lib/postgresql/data
     networks:
-      - nexora_net
+      - nexora_network
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB}"]
       interval: 5s
@@ -24,10 +52,14 @@ services:
       retries: 10
 
 networks:
-  nexora_net:
-    name: nexora_net
+  nexora_network:
+    name: nexora_network
     driver: bridge
 
 volumes:
-  nexora_pg_data:
-    name: nexora_pg_data
+  nexora_postgres_data:
+    name: nexora_postgres_data
+  nexora_app_node_modules:
+    name: nexora_app_node_modules
+  nexora_app_next:
+    name: nexora_app_next

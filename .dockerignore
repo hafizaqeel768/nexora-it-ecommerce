@@ -1,0 +1,12 @@
+# The image only needs package.json + package-lock.json; everything else is bind-mounted at runtime.
+node_modules
+.next
+.git
+.env
+.env.*
+!.env.example
+media
+design
+docs
+*.tsbuildinfo
+npm-debug.log*

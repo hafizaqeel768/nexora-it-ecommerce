@@ -17,7 +17,12 @@ nextjs-ecommerce/
 │   ├── PHASE-1-INSTALL.md            ← Next.js install report
 │   ├── PHASE-2-DATABASE.md           ← Postgres (Docker) setup report
 │   ├── PHASE-3-LAYOUT.md             ← design tokens + header/footer report
-│   └── PHASE-4-IMAGES.md             ← media naming convention + home image sections
+│   ├── PHASE-4-IMAGES.md             ← media naming convention + home image sections
+│   ├── DOCKERIZATION.md              ← Docker-first dev environment (nexora_app + nexora_pg)
+│   ├── PHASE-5-DATABASE.md           ← Prisma schema + seed report
+│   ├── HOME-PAGE.md                  ← all home page sections (completed after Phase 5)
+│   ├── PHASE-6-SHOP.md               ← shop listing + product pages report
+│   └── kijero-products.json          ← real product catalog (299 entries) used by the seed
 ├── media/
 │   ├── products/                     ← real product photos
 │   ├── category/                     ← category tile/banner images
@@ -38,7 +43,7 @@ Treat it as an executable spec, not just a visual mockup — the JS logic in it 
 - **Check before creating.** Before adding any Docker container, network, or exposed port, run `docker ps`, `docker network ls`, and check for port collisions. Use project-specific names (e.g. `nexora_pg`, not `postgres`) and a dedicated Docker network for this project.
 - **One phase at a time.** Do not scaffold the whole app in one shot. Complete a phase, verify it works, then move to the next.
 - **Use the provided media, not placeholders.** Once images exist in `media/`, wire components to reference them by a predictable naming/slug convention rather than stock/random images.
-- **WSL-native, not Docker, for the Next.js dev server.** Only backend services (Postgres, etc.) run in Docker; `npm run dev` runs directly in WSL for fast hot reload.
+- **Docker-first development (changed 2026-09-23, see `docs/DOCKERIZATION.md`).** `docker compose up -d` runs everything: `nexora_app` (Next.js dev server, source bind-mounted for hot reload) and `nexora_pg` (PostgreSQL). Do not run `npm run dev` directly in WSL; it would collide with `nexora_app` on port 3100. Run project commands inside the container: `docker compose exec app npm …`.
 
 ## Tech stack
 
@@ -86,7 +91,7 @@ Treat it as an executable spec, not just a visual mockup — the JS logic in it 
 ### Phase 5 — Database schema + seed
 - Prisma schema: `Product`, `Variant`, `Category` (with image referencing `media/category/`), `Review`, `Order`, `OrderItem`, `Customer`, `WishlistItem`, `Coupon`, `Quote` — modeled on the prototype's data shapes (variants, tiered pricing, reviews, etc.)
 - Seed script ports the prototype's sample products, pointed at real image files
-- **Checkpoint:** `npx prisma studio` shows correctly seeded data
+- **Checkpoint:** `docker compose exec app npm run db:studio` → http://localhost:5555 shows correctly seeded data
 
 ### Phase 6 — Shop + product pages (read-only)
 - Category grid, shop listing with filters/search/sort, PDP with gallery, variant selector, bulk-tier pricing table, reviews — all reading from Postgres via Prisma
