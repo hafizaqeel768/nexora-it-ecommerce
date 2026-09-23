@@ -1,0 +1,178 @@
+/* Brands & promotions — ported from the prototype's .dl / .dt / .dview / .ds rules. */
+
+.layout {
+  display: grid;
+  grid-template-columns: 300px 1fr;
+  gap: 20px;
+  align-items: stretch;
+}
+
+.tabs {
+  display: grid;
+  gap: 10px;
+}
+
+.tab {
+  all: unset;
+  box-sizing: border-box;
+  display: block;
+  cursor: pointer;
+  position: relative;
+  overflow: hidden;
+  padding: 16px 18px 16px 20px;
+  border-radius: 16px;
+  background: #fff;
+  border: 1px solid var(--line);
+  transition: border-color 0.25s, box-shadow 0.25s, transform 0.25s;
+}
+
+.tab:hover {
+  transform: translateX(4px);
+}
+
+.tab:focus-visible {
+  outline: 2px solid var(--color-accent);
+  outline-offset: 2px;
+}
+
+.tab small {
+  color: #d21f2b;
+  font-weight: 800;
+  font-size: 12px;
+  letter-spacing: 0.1em;
+}
+
+.tab b {
+  display: block;
+  font-size: 16.5px;
+  margin: 2px 0;
+}
+
+.tab span {
+  color: var(--muted);
+  font-size: 13px;
+}
+
+.tab::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  width: 4px;
+  background: #d21f2b;
+  transform: scaleY(0);
+  transition: transform 0.3s;
+}
+
+.tab i {
+  position: absolute;
+  left: 0;
+  bottom: 0;
+  height: 3px;
+  width: 0;
+  background: #d21f2b55;
+}
+
+.tab.active {
+  border-color: #d21f2b;
+  box-shadow: 0 12px 30px #d21f2b22;
+}
+
+.tab.active::before {
+  transform: scaleY(1);
+}
+
+.tab.active i {
+  animation: fill 5s linear forwards;
+}
+
+.view {
+  position: relative;
+  border-radius: 22px;
+  overflow: hidden;
+  min-height: 330px;
+  background: #111;
+  box-shadow: 0 24px 60px #0000002e;
+}
+
+.slide {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  opacity: 0;
+  visibility: hidden;
+  transition: opacity 0.6s, visibility 0.6s;
+}
+
+.slide.active {
+  opacity: 1;
+  visibility: visible;
+}
+
+/* Blurred copy of the banner fills the frame behind it */
+.backdrop {
+  position: absolute;
+  inset: -30px;
+  background-size: cover;
+  background-position: center;
+  filter: blur(26px) brightness(0.85) saturate(1.2);
+}
+
+.slide img {
+  position: relative;
+  width: 90%;
+  height: auto;
+  max-height: 86%;
+  object-fit: contain;
+  border-radius: 14px;
+  box-shadow: 0 24px 60px #0006;
+  transform: scale(0.96);
+  transition: transform 0.8s;
+}
+
+.slide.active img {
+  transform: none;
+}
+
+.badge {
+  position: absolute;
+  right: 18px;
+  bottom: 16px;
+  background: #d21f2b;
+  color: #fff;
+  font-size: 13px;
+  font-weight: 700;
+  padding: 9px 18px;
+  border-radius: 99px;
+  box-shadow: 0 8px 20px #0005;
+  transition: transform 0.25s;
+}
+
+.slide:hover .badge {
+  transform: translateX(-4px) scale(1.05);
+}
+
+@media (max-width: 900px) {
+  .layout {
+    grid-template-columns: 1fr;
+  }
+
+  .tabs {
+    grid-auto-flow: column;
+    grid-auto-columns: 220px;
+    overflow-x: auto;
+    scrollbar-width: none;
+  }
+
+  .view {
+    min-height: 230px;
+  }
+}
+
+@keyframes fill {
+  to {
+    width: 100%;
+  }
+}

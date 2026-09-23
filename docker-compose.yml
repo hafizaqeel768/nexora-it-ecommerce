@@ -1,0 +1,33 @@
+# Nexora IT — backend services only. The Next.js dev server runs natively in WSL (npm run dev, port 3100).
+# Names and ports verified free in docs/PHASE-0-ENVIRONMENT.md. Credentials come from .env (git-ignored).
+name: nexora
+
+services:
+  db:
+    image: postgres:17-alpine
+    container_name: nexora_pg
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:?set in .env}
+      POSTGRES_USER: ${POSTGRES_USER:?set in .env}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?set in .env}
+    ports:
+      - "127.0.0.1:${POSTGRES_PORT:-5432}:5432"
+    volumes:
+      - nexora_pg_data:/var/lib/postgresql/data
+    networks:
+      - nexora_net
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB}"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+networks:
+  nexora_net:
+    name: nexora_net
+    driver: bridge
+
+volumes:
+  nexora_pg_data:
+    name: nexora_pg_data
