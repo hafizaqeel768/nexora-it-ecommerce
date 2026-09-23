@@ -5,9 +5,13 @@ import { Gallery } from "@/components/product/gallery";
 import { ProductCard } from "@/components/product/product-card";
 import { PurchasePanel } from "@/components/product/purchase-panel";
 import { RelatedRow } from "@/components/product/related-row";
-import { Reviews } from "@/components/product/reviews";
+import { Reviews, type ReviewAccess } from "@/components/product/reviews";
 import { getProduct, getRelated } from "@/lib/catalog";
+import { getConfig } from "@/lib/config";
+import { db } from "@/lib/db";
+import { hasBought } from "@/lib/reviews";
 import { categoryHref } from "@/lib/site-nav";
+import { getViewer } from "@/lib/viewer";
 
 type Props = { params: Promise<{ slug: string }> };
 
@@ -21,7 +25,21 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 export default async function ProductPage({ params }: Props) {
   const product = await getProduct((await params).slug);
   if (!product) notFound();
-  const related = await getRelated(product);
+  const [related, viewer, reviewSettings] = await Promise.all([getRelated(product), getViewer(), getConfig("reviews")]);
+
+  // Who may write a review here, and the customer's own review (it may still be waiting for approval).
+  let access: ReviewAccess = { mode: "off", productId: product.id, slug: product.slug, own: null };
+  if (reviewSettings.enabled) {
+    if (!viewer) access = { ...access, mode: "login" };
+    else {
+      const own = await db.review.findUnique({
+        where: { productId_customerId: { productId: product.id, customerId: viewer.id } },
+        select: { rating: true, title: true, body: true, approved: true },
+      });
+      const allowed = !!own || !reviewSettings.buyersOnly || (await hasBought(product.id, viewer));
+      access = { ...access, mode: allowed ? "form" : "buyers", own: own && { ...own, title: own.title ?? "" } };
+    }
+  }
 
   return (
     <main className="min-h-[80vh] pt-12 pb-[60px]">
@@ -47,7 +65,7 @@ export default async function ProductPage({ params }: Props) {
         </nav>
 
         <div className="grid grid-cols-2 items-start gap-10 max-lg:grid-cols-1">
-          <Gallery images={product.images} name={product.name} topCategorySlug={product.topCategorySlug} />
+          <Gallery images={product.images} name={product.name} topCategoryIcon={product.topCategoryIcon} />
           <PurchasePanel
             productId={product.id}
             image={product.images[0] ?? null}
@@ -66,7 +84,7 @@ export default async function ProductPage({ params }: Props) {
           />
         </div>
 
-        <Reviews reviews={product.reviews} />
+        <Reviews reviews={product.reviews} access={access} />
 
         {related.length > 0 && (
           <RelatedRow>

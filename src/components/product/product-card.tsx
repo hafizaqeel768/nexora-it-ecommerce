@@ -47,8 +47,8 @@ export function ProductCard({ product: p, index = 0 }: { product: ProductCardDat
           ) : (
             // No photo yet: neutral category icon, never a stock image.
             <span className="grid h-full place-items-center text-accent/70 transition duration-400 group-hover:scale-110">
-              {isCategoryIcon(p.topCategorySlug) ? (
-                <CategoryGlyph name={p.topCategorySlug} className="size-16" />
+              {isCategoryIcon(p.topCategoryIcon) ? (
+                <CategoryGlyph name={p.topCategoryIcon} className="size-16" />
               ) : (
                 <GridIcon className="size-16" />
               )}

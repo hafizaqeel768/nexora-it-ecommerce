@@ -5,11 +5,11 @@ import { useEffect, useRef, useState, type MouseEvent } from "react";
 import { CategoryGlyph, GridIcon } from "@/components/icons";
 import { isCategoryIcon } from "@/lib/site-nav";
 
-type Props = { images: string[]; name: string; topCategorySlug: string };
+type Props = { images: string[]; name: string; topCategoryIcon: string | null };
 
 // Product gallery (the prototype's gal/initGal): main image with hover zoom, arrows, dots,
 // thumbnails, swipe, and a lightbox on click. Arrows/dots/thumbnails only appear with 2+ images.
-export function Gallery({ images, name, topCategorySlug }: Props) {
+export function Gallery({ images, name, topCategoryIcon }: Props) {
   const [k, setK] = useState(0);
   const [zoom, setZoom] = useState<string | null>(null);
   const [lightbox, setLightbox] = useState(false);
@@ -36,7 +36,7 @@ export function Gallery({ images, name, topCategorySlug }: Props) {
     // No photo yet: neutral category icon, never a stock image.
     return (
       <div className="grid aspect-[4/3.1] place-items-center rounded-18 border border-line bg-white text-accent/60">
-        {isCategoryIcon(topCategorySlug) ? <CategoryGlyph name={topCategorySlug} className="size-28" /> : <GridIcon className="size-28" />}
+        {isCategoryIcon(topCategoryIcon) ? <CategoryGlyph name={topCategoryIcon} className="size-28" /> : <GridIcon className="size-28" />}
       </div>
     );
   }

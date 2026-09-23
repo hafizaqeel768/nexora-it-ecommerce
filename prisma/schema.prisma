@@ -66,8 +66,12 @@ model Category {
   slug        String     @unique
   name        String
   description String?
-  /// Public path, e.g. /media/category/monitors.webp
+  /// Public path, e.g. /media/category/monitors.webp or an admin upload (/uploads/…)
   image       String?
+  /// Line icon for menus/tiles when there is no image (see CategoryGlyph); null = generic grid icon
+  icon        String?
+  /// Listed in the header menu, footer and home tiles (top-level categories only)
+  showInMenu  Boolean    @default(true)
   sortOrder   Int        @default(0)
   parentId    String?
   parent      Category?  @relation("CategoryTree", fields: [parentId], references: [id], onDelete: Restrict)
@@ -166,10 +170,17 @@ model Review {
   customer   Customer? @relation(fields: [customerId], references: [id], onDelete: SetNull)
   authorName String
   rating     Int
+  /// Optional short headline
+  title      String?
   body       String
+  /// false = waiting for moderation (Admin → Reviews)
   approved   Boolean   @default(true)
+  /// The author had a non-cancelled order with this product when writing the review
+  verifiedBuyer Boolean @default(false)
   createdAt  DateTime  @default(now())
 
+  /// One review per customer per product (demo reviews have no customer)
+  @@unique([productId, customerId])
   @@index([productId])
 }
 

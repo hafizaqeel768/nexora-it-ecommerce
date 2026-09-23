@@ -1,6 +1,7 @@
 import Image from "next/image";
 import Link from "next/link";
 import { toggleProductStatus } from "@/app/actions/admin";
+import { CatalogTabs } from "@/components/admin/catalog-tabs";
 import { Pager, pageParam } from "@/components/admin/pager";
 import { SwitchButton } from "@/components/admin/switch-button";
 import { card, EmptyRow, ExportLink, row, select, table, td, th } from "@/components/admin/ui";
@@ -43,6 +44,7 @@ export default async function AdminProducts({ searchParams }: Props) {
 
   return (
     <>
+      <CatalogTabs />
       <form className="mb-4 flex flex-wrap items-center gap-3" role="search">
         <input name="q" defaultValue={q} placeholder="Search name, brand or SKU…" aria-label="Search products" className={`${fieldClass} max-w-[320px] min-w-[160px] flex-1 py-2.5`} />
         <select name="cat" defaultValue={cat} aria-label="Category" className={select}>

@@ -41,10 +41,11 @@ export default async function AdminDashboard() {
     db.order.findMany({ orderBy: { createdAt: "desc" }, take: 6 }),
     Promise.resolve({ status: "ACTIVE" as const, stock: { not: null, lte: lowStockAt } }),
   ]);
-  const [queuedEmails, failedEmails, cartsWaiting] = await Promise.all([
+  const [queuedEmails, failedEmails, cartsWaiting, pendingReviews] = await Promise.all([
     db.orderEmail.count({ where: { sentAt: null, attempts: { lt: MAX_EMAIL_ATTEMPTS } } }),
     db.orderEmail.count({ where: { sentAt: null, attempts: { gte: MAX_EMAIL_ATTEMPTS } } }),
     db.savedCart.count({ where: { remindedAt: null } }),
+    db.review.count({ where: { approved: false } }),
   ]);
   const [lowCount, low] = await Promise.all([
     db.product.count({ where: lowWhere }),
@@ -76,6 +77,14 @@ export default async function AdminDashboard() {
         <Kpi label="Customers" value={buyers.length} note="unique buyers" />
         <Kpi label="Quote requests" value={quoteCount} note={`${newQuotes} new`} />
       </div>
+      {pendingReviews > 0 && (
+        <p className="mb-4 rounded-12 border border-[#f59e0b55] bg-[#f59e0b14] px-4 py-3 text-14">
+          {pendingReviews} review{pendingReviews === 1 ? " is" : "s are"} waiting for approval.{" "}
+          <Link href="/admin/reviews" className="font-bold text-accent">
+            Review now →
+          </Link>
+        </p>
+      )}
 
       <div className={grid}>
         <div className={card}>

@@ -7,8 +7,8 @@ export type ProductCardData = {
   name: string;
   brand: string;
   categoryName: string;
-  /** Top-level category slug; used for the icon when there is no photo */
-  topCategorySlug: string;
+  /** Top-level category's icon (Admin → Categories); shown when there is no photo */
+  topCategoryIcon: string | null;
   price: string;
   compareAtPrice: string | null;
   rating: number | null;
@@ -39,7 +39,7 @@ export function toCard(p: CardRow): ProductCardData {
     name: p.name,
     brand: p.brand,
     categoryName: p.category.name,
-    topCategorySlug: top.slug,
+    topCategoryIcon: top.icon,
     price: p.price.toString(),
     compareAtPrice: p.compareAtPrice?.toString() ?? null,
     rating: p.rating == null ? null : Number(p.rating),

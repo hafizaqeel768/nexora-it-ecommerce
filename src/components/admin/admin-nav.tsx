@@ -9,7 +9,8 @@ const NAV = [
   {
     href: "/admin/products",
     label: "Products",
-    title: "Products",
+    title: "Catalog",
+    also: ["/admin/categories", "/admin/brands"],
     icon: (
       <>
         <path d="M21 8 12 3 3 8v8l9 5 9-5z" />
@@ -30,6 +31,12 @@ const NAV = [
     ),
   },
   { href: "/admin/quotes", label: "Quotes", title: "Quote requests", icon: <path d="M4 5h16v11H8l-4 4z" /> },
+  {
+    href: "/admin/reviews",
+    label: "Reviews",
+    title: "Reviews",
+    icon: <path d="m12 3 2.7 5.6 6.1.9-4.4 4.3 1 6.1L12 17l-5.4 2.9 1-6.1L3.2 9.5l6.1-.9z" />,
+  },
   {
     href: "/admin/customers",
     label: "Customers",
@@ -65,8 +72,12 @@ const NAV = [
   },
 ];
 
+type NavItem = { href: string; label: string; title: string; icon: React.ReactNode; also?: string[] };
+
 const current = (pathname: string) =>
-  NAV.find((n) => (n.href === "/admin" ? pathname === "/admin" : pathname.startsWith(n.href))) ?? NAV[0];
+  (NAV as NavItem[]).find((n) =>
+    n.href === "/admin" ? pathname === "/admin" : [n.href, ...(n.also ?? [])].some((h) => pathname.startsWith(h)),
+  ) ?? NAV[0];
 
 export function AdminNav() {
   const active = current(usePathname());

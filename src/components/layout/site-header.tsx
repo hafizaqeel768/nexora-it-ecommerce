@@ -7,6 +7,7 @@ import { HeaderSearch } from "@/components/layout/header-search";
 import { StoreLogo } from "@/components/store-logo";
 import { WishlistHeaderLink } from "@/components/wishlist/wishlist-button";
 import { db } from "@/lib/db";
+import { getMenuCategories } from "@/lib/categories";
 import { getConfig } from "@/lib/config";
 import { mainNav } from "@/lib/site-nav";
 import { accountOrdersWhere, getViewer } from "@/lib/viewer";
@@ -19,7 +20,7 @@ const topLink =
 export async function SiteHeader() {
   const viewer = await getViewer();
   const orderCount = viewer ? await db.order.count({ where: accountOrdersWhere(viewer) }) : 0;
-  const store = await getConfig("store");
+  const [store, categories] = await Promise.all([getConfig("store"), getMenuCategories()]);
 
   return (
     <>
@@ -85,7 +86,7 @@ export async function SiteHeader() {
           aria-label="Main"
           className="wrap flex h-[50px] items-center gap-7 max-md:h-12 max-md:gap-3"
         >
-          <CategoryMenu />
+          <CategoryMenu categories={categories.map(({ slug, name, icon }) => ({ slug, name, icon }))} />
           <ul className="flex flex-1 gap-7 [scrollbar-width:none] max-xl:overflow-x-auto">
             {mainNav.map((item) => (
               <li key={item.label}>

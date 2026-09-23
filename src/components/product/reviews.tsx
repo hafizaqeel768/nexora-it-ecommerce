@@ -1,12 +1,17 @@
+import Link from "next/link";
+import { ReviewForm, type OwnReview } from "@/components/product/review-form";
 import { stars } from "@/lib/format";
 
-type Review = { id: string; author: string; rating: number; body: string; date: string };
+type Review = { id: string; author: string; rating: number; title: string | null; body: string; verified: boolean; date: string };
+
+/** Who may write: "form" (signed in and allowed), "login", "buyers" (buyers only, hasn't bought), "off". */
+export type ReviewAccess = { mode: "form" | "login" | "buyers" | "off"; productId: string; slug: string; own: OwnReview | null };
 
 const date = (iso: string) =>
   new Date(iso).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" });
 
-// Customer reviews (the prototype's reviewsHTML). Writing reviews needs accounts (Phase 8).
-export function Reviews({ reviews }: { reviews: Review[] }) {
+// Customer reviews (the prototype's reviewsHTML): approved reviews, and the "Write a review" form (Phase 12).
+export function Reviews({ reviews, access }: { reviews: Review[]; access: ReviewAccess }) {
   const avg = reviews.length ? reviews.reduce((s, r) => s + r.rating, 0) / reviews.length : 0;
   const dist = [5, 4, 3, 2, 1].map((s) => ({ s, n: reviews.filter((r) => Math.round(r.rating) === s).length }));
   const max = Math.max(1, ...dist.map((d) => d.n));
@@ -49,14 +54,28 @@ export function Reviews({ reviews }: { reviews: Review[] }) {
                 <div className="mb-1.5 flex flex-wrap items-center gap-2.5">
                   <b>{r.author}</b>
                   <span className="text-star">{stars(r.rating)}</span>
+                  {r.verified && <span className="rounded-pill bg-[#16a34a1a] px-2 py-0.5 text-11 font-bold text-success">✓ Verified buyer</span>}
                   <small className="ml-auto text-muted">{date(r.date)}</small>
                 </div>
-                <p className="text-14 leading-[1.6]">{r.body}</p>
+                {r.title && <b className="mb-1 block text-15">{r.title}</b>}
+                <p className="text-14 leading-[1.6] whitespace-pre-line">{r.body}</p>
               </article>
             ))}
           </div>
         </>
       )}
+      <div className="mt-2">
+        {access.mode === "form" && <ReviewForm productId={access.productId} own={access.own} />}
+        {access.mode === "login" && (
+          <p className="rounded-14 border border-line bg-white p-5 text-14 text-muted">
+            <Link href={`/login?next=${encodeURIComponent(`/product/${access.slug}#reviews-title`)}`} className="font-bold text-accent">
+              Log in
+            </Link>{" "}
+            to write a review.
+          </p>
+        )}
+        {access.mode === "buyers" && <p className="rounded-14 border border-line bg-white p-5 text-14 text-muted">Only customers who bought this product can review it.</p>}
+      </div>
     </section>
   );
 }

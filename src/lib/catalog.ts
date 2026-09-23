@@ -167,11 +167,11 @@ export const getProduct = cache(async (slug: string) => {
     rating: p.rating == null ? null : Number(p.rating),
     description: p.description ?? p.shortDescription,
     images: [p.image, ...p.gallery].filter((u): u is string => !!u),
-    topCategorySlug: (p.category.parent ?? p.category).slug,
+    topCategoryIcon: (p.category.parent ?? p.category).icon,
     details,
     variants: p.variants.map((v) => ({ id: v.id, attribute: v.attribute, name: v.name, priceDelta: Number(v.priceDelta) })),
     tiers: p.priceTiers.map((t) => ({ minQty: t.minQty, maxQty: t.maxQty, multiplier: Number(t.multiplier) })),
-    reviews: p.reviews.map((r) => ({ id: r.id, author: r.authorName, rating: r.rating, body: r.body, date: r.createdAt.toISOString() })),
+    reviews: p.reviews.map((r) => ({ id: r.id, author: r.authorName, rating: r.rating, title: r.title, body: r.body, verified: r.verifiedBuyer, date: r.createdAt.toISOString() })),
     categoryId: p.categoryId,
   };
 });

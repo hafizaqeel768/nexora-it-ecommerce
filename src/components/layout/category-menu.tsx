@@ -2,11 +2,11 @@
 
 import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
-import { ArrowRightIcon, CategoryGlyph, MenuIcon } from "@/components/icons";
-import { categories, categoryHref } from "@/lib/site-nav";
+import { ArrowRightIcon, CategoryGlyph, GridIcon, MenuIcon } from "@/components/icons";
+import { categoryHref, isCategoryIcon } from "@/lib/site-nav";
 
 // "ALL CATEGORIES" dropdown. Opens on hover (pointer devices, via CSS) and on click/tap (state).
-export function CategoryMenu() {
+export function CategoryMenu({ categories }: { categories: { slug: string; name: string; icon: string | null }[] }) {
   const [open, setOpen] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
 
@@ -53,7 +53,7 @@ export function CategoryMenu() {
             onClick={close}
             className="flex items-center gap-3 rounded-10 px-3.5 py-3 text-nav font-semibold text-header-ink transition duration-150 hover:bg-accent-soft hover:text-accent"
           >
-            <CategoryGlyph name={c.slug} className="size-[22px] stroke-accent" />
+            {isCategoryIcon(c.icon) ? <CategoryGlyph name={c.icon} className="size-[22px] stroke-accent" /> : <GridIcon className="size-[22px] stroke-accent" />}
             {c.name}
           </Link>
         ))}

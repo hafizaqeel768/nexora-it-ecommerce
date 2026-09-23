@@ -1,5 +1,5 @@
-// Static navigation for the header and footer, mirroring design/nexora-full-with-admin.html.
-// Categories become database-backed in Phase 5; the prototype's hash routes map to real routes here.
+// Navigation for the header and footer, mirroring design/nexora-full-with-admin.html. Categories come from the
+// database since Phase 12 (src/lib/categories.ts); the prototype's hash routes map to real routes here.
 
 export type CategoryIcon =
   | "computers"
@@ -10,25 +10,20 @@ export type CategoryIcon =
   | "iot"
   | "audio-conferencing";
 
-export type Category = {
-  slug: CategoryIcon;
-  name: string;
-  footerName?: string;
-};
-
-export const categories: Category[] = [
-  { slug: "computers", name: "Computers" },
-  { slug: "tablets", name: "Tablets" },
-  { slug: "monitors", name: "Monitors" },
-  { slug: "networking", name: "Networking" },
-  { slug: "power", name: "Power", footerName: "Power & UPS" },
-  { slug: "iot", name: "IoT" },
-  { slug: "audio-conferencing", name: "Audio & Conferencing" },
+/** Line icons available for categories (Admin → Categories → Icon). */
+export const CATEGORY_ICONS: { value: CategoryIcon; label: string }[] = [
+  { value: "computers", label: "Computer" },
+  { value: "tablets", label: "Tablet" },
+  { value: "monitors", label: "Monitor" },
+  { value: "networking", label: "Network" },
+  { value: "power", label: "Power" },
+  { value: "iot", label: "IoT / sensor" },
+  { value: "audio-conferencing", label: "Audio" },
 ];
 
 export const categoryHref = (slug: string) => `/shop?category=${slug}`;
 
-export const isCategoryIcon = (slug: string): slug is CategoryIcon => categories.some((c) => c.slug === slug);
+export const isCategoryIcon = (name: string | null | undefined): name is CategoryIcon => CATEGORY_ICONS.some((i) => i.value === name);
 
 export const mainNav = [
   { label: "ABOUT US", href: "/#about" },

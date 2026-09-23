@@ -27,6 +27,7 @@ nextjs-ecommerce/
 │   ├── PHASE-9-ADMIN.md              ← admin panel report (+ header search fix)
 │   ├── PHASE-10-EMAILS.md            ← emails, verification, password reset, cart reminders, final QA
 │   ├── PHASE-11-STORE-CONFIGURATION.md ← admin settings: store details, shipping, tax, payments, checkout, email
+│   ├── PHASE-12-CATALOG.md           ← categories, brands, options, bulk tiers, reviews, CSV import
 │   └── kijero-products.json          ← real product catalog (299 entries) used by the seed
 ├── media/
 │   ├── products/                     ← real product photos

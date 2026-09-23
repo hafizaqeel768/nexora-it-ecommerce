@@ -1,32 +1,38 @@
 import Image from "next/image";
 import Link from "next/link";
 import { CategoryGlyph, GridIcon, ServicesIcon } from "@/components/icons";
-import { categoryImage } from "@/lib/media";
-import { categoryHref, type CategoryIcon } from "@/lib/site-nav";
+import { getMenuCategories, HOME_CATEGORY_TILES } from "@/lib/categories";
+import { categoryHref, isCategoryIcon } from "@/lib/site-nav";
 
-// Category tiles. A tile shows media/category/<slug>.* when that photo exists, otherwise its icon.
+// Category tiles: the first menu categories from Admin → Categories (photo, else icon), then two fixed tiles.
 type Tile = {
   title: string;
   text: string;
   link: string;
   href: string;
-  slug?: CategoryIcon;
+  photo?: string | null;
   icon?: React.ReactNode;
   highlight?: boolean;
 };
 
-const tiles: Tile[] = [
-  { slug: "computers", title: "PCs & Laptops", text: "Desktops, workstations and notebooks for every workload.", link: "Shop computers", href: categoryHref("computers") },
-  { slug: "tablets", title: "Tablets", text: "Rugged and consumer tablets for field and office use.", link: "Shop tablets", href: categoryHref("tablets") },
-  { slug: "monitors", title: "Monitors", text: 'Displays from everyday 24" to ultrawide and 4K.', link: "Shop monitors", href: categoryHref("monitors") },
-  { slug: "networking", title: "Networking", text: "Switches, routers, access points and firewalls.", link: "Shop networking", href: categoryHref("networking") },
-  { slug: "power", title: "Power & UPS", text: "Battery backup, meters and power protection.", link: "Shop power", href: categoryHref("power") },
-  { slug: "iot", title: "Industrial IoT", text: "Gateways, sensors and edge devices.", link: "Shop IoT", href: categoryHref("iot") },
+const fixedTiles: Tile[] = [
   { icon: <ServicesIcon className="size-[30px]" />, title: "IT Services", text: "Deployment, ERP/CRM setup and support.", link: "Get support", href: "/#contact" },
   { icon: <GridIcon className="size-[30px]" />, title: "All Products", text: "Browse the full catalog of business hardware.", link: "View catalog", href: "/shop", highlight: true },
 ];
 
-export function CategoryGrid() {
+export async function CategoryGrid() {
+  const categories = (await getMenuCategories()).slice(0, HOME_CATEGORY_TILES);
+  const tiles: Tile[] = [
+    ...categories.map((c) => ({
+      title: c.name,
+      text: c.description ?? "",
+      link: `Shop ${c.name.toLowerCase()}`,
+      href: categoryHref(c.slug),
+      photo: c.image,
+      icon: isCategoryIcon(c.icon) ? <CategoryGlyph name={c.icon} className="size-[30px]" /> : <GridIcon className="size-[30px]" />,
+    })),
+    ...fixedTiles,
+  ];
   return (
     <section id="products" className="section-grey">
       <div className="wrap">
@@ -43,7 +49,7 @@ export function CategoryGrid() {
 
         <div className="grid grid-cols-4 gap-[18px] max-[1001px]:grid-cols-2 max-[561px]:grid-cols-1">
           {tiles.map((t, i) => {
-            const photo = t.slug ? categoryImage(t.slug) : null;
+            const photo = t.photo;
             return (
               <Link
                 key={t.title}
@@ -74,7 +80,7 @@ export function CategoryGrid() {
                         : "bg-accent-soft text-accent group-hover:bg-accent group-hover:text-white"
                     }`}
                   >
-                    {t.icon ?? <CategoryGlyph name={t.slug!} className="size-[30px]" />}
+                    {t.icon}
                   </span>
                 )}
 

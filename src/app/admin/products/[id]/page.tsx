@@ -1,7 +1,9 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
+import { savePriceTiers, saveProductOptions } from "@/app/actions/catalog";
+import { OptionsEditor, TiersEditor } from "@/components/admin/product-extras";
 import { ProductForm } from "@/components/admin/product-form";
-import { card } from "@/components/admin/ui";
+import { card, SectionTitle } from "@/components/admin/ui";
 import { requireAdminPage } from "@/lib/admin";
 import { categoryGroups } from "@/lib/admin-queries";
 import { db } from "@/lib/db";
@@ -13,7 +15,7 @@ export default async function EditProduct({ params, searchParams }: Props) {
   const { created } = await searchParams;
   await requireAdminPage(`/admin/products/${id}`);
   const [p, categories, sold] = await Promise.all([
-    db.product.findUnique({ where: { id } }),
+    db.product.findUnique({ where: { id }, include: { variants: { orderBy: { sortOrder: "asc" } }, priceTiers: { orderBy: { minQty: "asc" } } } }),
     categoryGroups(),
     db.orderItem.aggregate({ where: { productId: id, order: { status: { not: "CANCELLED" } } }, _sum: { quantity: true } }),
   ]);
@@ -56,6 +58,29 @@ export default async function EditProduct({ params, searchParams }: Props) {
             specs: specs.map((s) => (s.value ? `${s.label}: ${s.value}` : s.label)).join("\n"),
             images: [p.image, ...p.gallery].filter((u): u is string => !!u),
           }}
+        />
+      </div>
+
+      <div className={`${card} mt-4 max-w-[860px]`}>
+        <SectionTitle hint="E.g. memory or warranty choices. Each option can change the price.">Options</SectionTitle>
+        <OptionsEditor
+          action={saveProductOptions.bind(null, p.id)}
+          basePrice={Number(p.price)}
+          attribute={p.variants[0]?.attribute ?? ""}
+          options={p.variants.map((v) => ({ id: v.id, name: v.name, delta: v.priceDelta.toString(), sku: v.sku ?? "" }))}
+        />
+      </div>
+
+      <div className={`${card} mt-4 max-w-[860px]`}>
+        <SectionTitle hint="Lower unit prices for larger quantities (shown on the product page as “Bulk pricing”).">Bulk pricing</SectionTitle>
+        <TiersEditor
+          action={savePriceTiers.bind(null, p.id)}
+          basePrice={Number(p.price)}
+          tiers={p.priceTiers.map((t) => ({
+            min: String(t.minQty),
+            max: t.maxQty == null ? "" : String(t.maxQty),
+            pct: String(Math.round((1 - Number(t.multiplier)) * 1000) / 10),
+          }))}
         />
       </div>
     </>

@@ -1,7 +1,8 @@
 import Link from "next/link";
 import { StoreLogo } from "@/components/store-logo";
+import { getMenuCategories } from "@/lib/categories";
 import { getConfig } from "@/lib/config";
-import { categories, categoryHref, companyLinks } from "@/lib/site-nav";
+import { categoryHref, companyLinks } from "@/lib/site-nav";
 
 // Footer from the prototype; about text, contacts, social links and copyright come from Settings → Store details.
 // (Newsletter sign-ups are stored from Phase 14.)
@@ -15,7 +16,7 @@ const SOCIAL = [
 ] as const;
 
 export async function SiteFooter() {
-  const store = await getConfig("store");
+  const [store, categories] = await Promise.all([getConfig("store"), getMenuCategories()]);
   const social = SOCIAL.filter((s) => store.social[s.key]);
   const copyright = store.copyright.replace("{year}", String(new Date().getFullYear()));
   return (
@@ -81,7 +82,7 @@ export async function SiteFooter() {
             <h4 className="mb-3.5 text-14 font-bold text-white">Shop</h4>
             {categories.map((c) => (
               <Link key={c.slug} href={categoryHref(c.slug)} className={footerLink}>
-                {c.footerName ?? c.name}
+                {c.name}
               </Link>
             ))}
           </div>

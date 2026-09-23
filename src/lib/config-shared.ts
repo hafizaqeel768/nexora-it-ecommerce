@@ -44,12 +44,22 @@ export type EmailSettings = {
 
 export type InventorySettings = { lowStockAt: number };
 
+export type ReviewSettings = {
+  /** Customers can write reviews (signed in) */
+  enabled: boolean;
+  /** New and edited reviews wait in Admin → Reviews until approved */
+  requireApproval: boolean;
+  /** Only customers who ordered the product can review it */
+  buyersOnly: boolean;
+};
+
 export type ConfigSections = {
   store: StoreDetails;
   checkout: CheckoutSettings;
   payments: PaymentSettings;
   email: EmailSettings;
   inventory: InventorySettings;
+  reviews: ReviewSettings;
 };
 export type ConfigSection = keyof ConfigSections;
 
@@ -88,6 +98,7 @@ export const DEFAULT_CONFIG: ConfigSections = {
     },
   },
   inventory: { lowStockAt: 10 },
+  reviews: { enabled: true, requireApproval: true, buyersOnly: false },
 };
 
 export const EMAIL_TEMPLATE_INFO: Record<EmailTemplateKey, { label: string; when: string; placeholders: string }> = {
