@@ -1,9 +1,14 @@
-// Store rules from the prototype's SET object. Admin-editable settings come in Phase 9.
-export const STORE = {
+// Store rules (the prototype's SET). Stored in StoreSettings and edited in /admin/settings;
+// these defaults apply until the settings are first saved. Safe for server and client.
+export type StoreRules = {
   /** Free shipping when the discounted subtotal reaches this amount (USD) */
-  freeShippingFrom: 500,
+  freeShippingFrom: number;
   /** Flat shipping fee below the threshold (USD) */
-  shippingFee: 25,
+  shippingFee: number;
   /** Estimated sales tax, percent of the discounted subtotal */
-  taxPercent: 8,
-} as const;
+  taxPercent: number;
+  /** Admin low-stock alert at or below this many units */
+  lowStockAt: number;
+};
+
+export const DEFAULT_STORE_RULES: StoreRules = { freeShippingFrom: 500, shippingFee: 25, taxPercent: 8, lowStockAt: 10 };

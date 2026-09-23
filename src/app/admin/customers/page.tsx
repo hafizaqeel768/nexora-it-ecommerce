@@ -1,0 +1,55 @@
+import { card, EmptyRow, ExportLink, row, table, td, th } from "@/components/admin/ui";
+import { requireAdminPage } from "@/lib/admin";
+import { customerRows } from "@/lib/admin-queries";
+import { money, shortDate } from "@/lib/format";
+
+// Customers (the prototype's a_cust): everyone who ordered or registered, by total spent.
+export default async function AdminCustomers() {
+  await requireAdminPage("/admin/customers");
+  const customers = await customerRows();
+
+  return (
+    <>
+      <div className="mb-4 flex justify-end">
+        <ExportLink href="/admin/export/customers" />
+      </div>
+      <div className={card}>
+        <table className={table}>
+          <thead>
+            <tr>
+              <th className={th}>Customer</th>
+              <th className={th}>Email</th>
+              <th className={th}>Account</th>
+              <th className={th}>Orders</th>
+              <th className={th}>Total spent</th>
+              <th className={th}>Last order</th>
+            </tr>
+          </thead>
+          <tbody>
+            {customers.length ? (
+              customers.map((c) => (
+                <tr key={c.id} className={row}>
+                  <td className={`${td} font-bold`}>{c.name}</td>
+                  <td className={td}>
+                    <a href={`mailto:${c.email}`} className="hover:text-accent">
+                      {c.email}
+                    </a>
+                  </td>
+                  <td className={`${td} text-13`}>
+                    {c.role === "ADMIN" ? <b className="text-accent">Admin</b> : c.registered ? "Registered" : <span className="text-muted">Guest</span>}
+                  </td>
+                  <td className={td}>{c.orders}</td>
+                  <td className={td}>{money(c.spent)}</td>
+                  <td className={`${td} whitespace-nowrap`}>{c.lastOrder ? shortDate(c.lastOrder) : "—"}</td>
+                </tr>
+              ))
+            ) : (
+              <EmptyRow cols={6}>No customers yet.</EmptyRow>
+            )}
+          </tbody>
+        </table>
+      </div>
+      <p className="mt-3 text-13 text-muted">{customers.length} customers. Spent excludes cancelled orders.</p>
+    </>
+  );
+}

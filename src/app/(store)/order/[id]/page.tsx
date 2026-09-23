@@ -25,6 +25,9 @@ export default async function OrderPage({ params, searchParams }: Props) {
   const awaitingCard = order.paymentMethod === "CREDIT_CARD" && !paid;
   const totals = { subtotal: n(order.subtotal), discount: n(order.discount), shipping: n(order.shippingFee), tax: n(order.tax), total: n(order.total) };
   const promoPercent = totals.subtotal ? Math.round((totals.discount / totals.subtotal) * 100) : 0;
+  // The rate that applied to this order (settings may have changed since).
+  const taxed = totals.subtotal - totals.discount;
+  const taxPercent = taxed ? Math.round((totals.tax / taxed) * 1000) / 10 : 0;
 
   return (
     <main className="min-h-[80vh] pt-12 pb-[60px]">
@@ -54,7 +57,7 @@ export default async function OrderPage({ params, searchParams }: Props) {
             )}
           </p>
           <div className="text-left">
-            <OrderSummary totals={totals} promoPercent={promoPercent}>
+            <OrderSummary totals={totals} promoPercent={promoPercent} taxPercent={taxPercent}>
               <div className="mt-3.5">
                 {order.items.map((i) => (
                   <div key={i.id} className="flex justify-between gap-3 py-[7px] text-14 text-muted">

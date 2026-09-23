@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { useState, useTransition } from "react";
 import { placeOrder, type CheckoutInput } from "@/app/actions/checkout";
 import { OrderSummary } from "@/components/cart/order-summary";
+import { useStoreRules } from "@/components/store-rules-provider";
 import { totalsOf, unitPriceOf, useCart } from "@/lib/cart-store";
 import { money } from "@/lib/format";
 
@@ -35,7 +36,8 @@ export function CheckoutView({
   const [error, setError] = useState<string | null>(canceled ? "Card payment was cancelled. Your cart is still here." : null);
   const [fields, setFields] = useState<Record<string, string>>({});
   const [pending, startTransition] = useTransition();
-  const totals = totalsOf(lines, promo?.percent ?? 0);
+  const rules = useStoreRules();
+  const totals = totalsOf(lines, promo?.percent ?? 0, rules);
 
   if (!lines.length) {
     return (
@@ -173,7 +175,7 @@ export function CheckoutView({
           </button>
         </form>
 
-        <OrderSummary totals={totals} promoPercent={promo?.percent}>
+        <OrderSummary totals={totals} promoPercent={promo?.percent} taxPercent={rules.taxPercent}>
           <div className="mt-3.5">
             {lines.map((l) => (
               <div key={l.key} className="flex justify-between gap-3 py-[7px] text-14 text-muted">

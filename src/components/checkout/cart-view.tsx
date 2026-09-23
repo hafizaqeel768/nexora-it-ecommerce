@@ -5,6 +5,7 @@ import { useState } from "react";
 import { applyCoupon } from "@/app/actions/checkout";
 import { CartLine } from "@/components/cart/cart-line";
 import { OrderSummary } from "@/components/cart/order-summary";
+import { useStoreRules } from "@/components/store-rules-provider";
 import { totalsOf, useCart } from "@/lib/cart-store";
 
 // Shopping cart page (the prototype's cartPage()).
@@ -13,7 +14,8 @@ export function CartView() {
   const [code, setCode] = useState("");
   const [message, setMessage] = useState<{ ok: boolean; text: string } | null>(null);
   const [busy, setBusy] = useState(false);
-  const totals = totalsOf(lines, promo?.percent ?? 0);
+  const rules = useStoreRules();
+  const totals = totalsOf(lines, promo?.percent ?? 0, rules);
 
   const apply = async () => {
     if (!code.trim()) return;
@@ -57,7 +59,7 @@ export function CartView() {
               </Link>
             </p>
           </div>
-          <OrderSummary totals={totals} promoPercent={promo?.percent}>
+          <OrderSummary totals={totals} promoPercent={promo?.percent} taxPercent={rules.taxPercent}>
             {promo ? (
               <p className="mt-3.5 flex items-center justify-between text-13 text-success">
                 <span>

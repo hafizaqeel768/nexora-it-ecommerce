@@ -82,12 +82,7 @@ export function SiteFooter() {
 
         <div className="mt-10 flex flex-wrap justify-between gap-2 border-t border-footer-line py-5 text-12">
           <span>© 2026 Nexora IT. Sample design for reference.</span>
-          <span>
-            Privacy · Terms · Shipping · Returns ·{" "}
-            <Link href="/admin" className="text-footer-text transition-colors hover:text-white">
-              Admin
-            </Link>
-          </span>
+          <span>Privacy · Terms · Shipping · Returns</span>
         </div>
       </div>
     </footer>

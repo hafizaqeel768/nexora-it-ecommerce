@@ -237,6 +237,7 @@ model Order {
   notes           String?
   items           OrderItem[]
   quote           Quote?
+  emails          OrderEmail[]
   createdAt       DateTime      @default(now())
   updatedAt       DateTime      @updatedAt
 
@@ -258,6 +259,22 @@ model OrderItem {
   unitPrice Decimal  @db.Decimal(10, 2)
   quantity  Int
   lineTotal Decimal  @db.Decimal(10, 2)
+
+  @@index([orderId])
+}
+
+/// Status notification for an order (the prototype's emailLog). Phase 9 records it; Phase 10 sends it.
+model OrderEmail {
+  id          String      @id @default(cuid())
+  orderId     String
+  order       Order       @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  /// The status the email announces
+  orderStatus OrderStatus
+  to          String
+  /// null = not sent yet (sending arrives in Phase 10)
+  sentAt      DateTime?
+  error       String?
+  createdAt   DateTime    @default(now())
 
   @@index([orderId])
 }
@@ -294,4 +311,15 @@ model Quote {
   updatedAt  DateTime    @updatedAt
 
   @@index([status])
+}
+
+/// Store rules edited in /admin/settings (the prototype's SET). A single row, id 1.
+model StoreSettings {
+  id               Int      @id @default(1)
+  taxPercent       Decimal  @default(8) @db.Decimal(5, 2)
+  freeShippingFrom Decimal  @default(500) @db.Decimal(10, 2)
+  shippingFee      Decimal  @default(25) @db.Decimal(10, 2)
+  /// Products at or below this stock show as low stock in the admin
+  lowStockAt       Int      @default(10)
+  updatedAt        DateTime @updatedAt
 }

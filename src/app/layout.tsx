@@ -1,8 +1,7 @@
 import type { Metadata, Viewport } from "next";
-import { CartDrawer } from "@/components/cart/cart-drawer";
-import { SiteFooter } from "@/components/layout/site-footer";
-import { SiteHeader } from "@/components/layout/site-header";
+import { StoreRulesProvider } from "@/components/store-rules-provider";
 import { WishlistProvider } from "@/components/wishlist/wishlist-provider";
+import { getStoreRules } from "@/lib/settings";
 import { getViewer } from "@/lib/viewer";
 import "./globals.css";
 
@@ -23,16 +22,16 @@ export default async function RootLayout({
 }: Readonly<{
   children: React.ReactNode;
 }>) {
-  const viewer = await getViewer();
+  const [viewer, rules] = await Promise.all([getViewer(), getStoreRules()]);
+  // Store chrome (header, footer, cart) lives in (store)/layout.tsx; /admin has its own layout.
   return (
     <html lang="en">
       <body>
-        <WishlistProvider signedIn={!!viewer} initialIds={viewer?.wishlistIds ?? []}>
-          <SiteHeader />
-          {children}
-          <SiteFooter />
-          <CartDrawer />
-        </WishlistProvider>
+        <StoreRulesProvider rules={rules}>
+          <WishlistProvider signedIn={!!viewer} initialIds={viewer?.wishlistIds ?? []}>
+            {children}
+          </WishlistProvider>
+        </StoreRulesProvider>
       </body>
     </html>
   );

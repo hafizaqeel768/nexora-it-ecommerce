@@ -1,10 +1,12 @@
 import Link from "next/link";
 import { logout } from "@/app/actions/account";
 import { CartButton } from "@/components/cart/cart-button";
-import { ChatIcon, SearchIcon } from "@/components/icons";
+import { ChatIcon } from "@/components/icons";
 import { CategoryMenu } from "@/components/layout/category-menu";
+import { HeaderSearch } from "@/components/layout/header-search";
 import { WishlistHeaderLink } from "@/components/wishlist/wishlist-button";
 import { db } from "@/lib/db";
+import { getStoreRules } from "@/lib/settings";
 import { mainNav } from "@/lib/site-nav";
 import { accountOrdersWhere, getViewer } from "@/lib/viewer";
 
@@ -16,6 +18,7 @@ const topLink =
 export async function SiteHeader() {
   const viewer = await getViewer();
   const orderCount = viewer ? await db.order.count({ where: accountOrdersWhere(viewer) }) : 0;
+  const { freeShippingFrom } = await getStoreRules();
 
   return (
     <>
@@ -25,7 +28,7 @@ export async function SiteHeader() {
           <div className="wrap flex flex-wrap justify-between max-md:justify-end">
             <span className="flex flex-wrap max-md:hidden">
               <span className="inline-flex items-center gap-2 py-1.5 pr-3">
-                🚚 Free shipping on orders over $500
+                🚚 Free shipping on orders over ${freeShippingFrom.toLocaleString("en-US")}
               </span>
             </span>
             <span className="flex flex-wrap">
@@ -68,28 +71,7 @@ export async function SiteHeader() {
             </b>
           </Link>
 
-          <form
-            action="/shop"
-            role="search"
-            autoComplete="off"
-            className="relative z-[5] flex h-12 flex-1 items-center gap-2.5 rounded-12 border-2 border-header-field bg-white pr-[5px] pl-4 text-header-icon shadow-field transition focus-within:border-accent focus-within:text-accent focus-within:shadow-field-focus max-md:order-3 max-md:h-[46px] max-md:shrink-0 max-md:basis-full"
-          >
-            <SearchIcon className="size-5 flex-none" />
-            <input
-              type="search"
-              name="q"
-              placeholder="Type keyword to search..."
-              aria-label="Search products"
-              className="h-full min-w-0 flex-1 bg-transparent text-15 text-header-ink outline-none placeholder:text-header-placeholder"
-            />
-            <button
-              type="submit"
-              aria-label="Search"
-              className="grid h-9 w-[76px] flex-none cursor-pointer place-items-center rounded-8 bg-accent text-white transition-colors hover:bg-accent-hover"
-            >
-              <SearchIcon className="size-5" />
-            </button>
-          </form>
+          <HeaderSearch />
 
           <WishlistHeaderLink
             className="relative mr-2 grid size-[42px] flex-none place-items-center rounded-8 border border-header-control bg-white text-header-ink transition-colors hover:border-accent hover:bg-accent hover:text-white max-md:order-2 max-md:ml-auto"

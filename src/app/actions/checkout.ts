@@ -1,13 +1,12 @@
 "use server";
 
-import { randomInt } from "node:crypto";
 import { headers } from "next/headers";
 import { auth } from "@/auth";
 import { PaymentMethod, Prisma } from "@/generated/prisma/client";
 import { db } from "@/lib/db";
 import { cartTotals, lineUnitPrice } from "@/lib/pricing";
-import { cancelUnpaidOrder } from "@/lib/orders";
-import { STORE } from "@/lib/store-settings";
+import { cancelUnpaidOrder, newOrderNumber } from "@/lib/orders";
+import { getStoreRules } from "@/lib/settings";
 import { getStripe, stripeEnabled } from "@/lib/stripe";
 
 // ---------- promo codes ----------
@@ -114,6 +113,7 @@ export async function placeOrder(input: CheckoutInput): Promise<CheckoutResult> 
   if (!lines.length) return { error: "Your cart is empty." };
 
   const accountId = (await auth())?.user?.id ?? null;
+  const rules = await getStoreRules();
 
   let order: { id: string; number: string; total: Prisma.Decimal };
   try {
@@ -145,7 +145,7 @@ export async function placeOrder(input: CheckoutInput): Promise<CheckoutResult> 
         ? await tx.coupon.findUnique({ where: { code: input.couponCode.trim().toUpperCase() } })
         : null;
       const percent = coupon?.active ? coupon.percentOff : 0;
-      const totals = cartTotals(items.map((i) => ({ unitPrice: i.unit, quantity: i.quantity })), percent, STORE);
+      const totals = cartTotals(items.map((i) => ({ unitPrice: i.unit, quantity: i.quantity })), percent, rules);
 
       // Reserve stock for tracked products (released again if a card payment is cancelled).
       for (const i of items) {
@@ -160,45 +160,42 @@ export async function placeOrder(input: CheckoutInput): Promise<CheckoutResult> 
 
       const customerId = await orderCustomerId(tx, accountId, contact, address);
 
-      for (let attempt = 0; attempt < 5; attempt++) {
-        const number = `NX-${randomInt(100000, 1000000)}`;
-        if (await tx.order.findUnique({ where: { number }, select: { id: true } })) continue;
-        return tx.order.create({
-          data: {
-            number,
-            customerId,
-            name: contact.name,
-            email: contact.email,
-            phone: contact.phone || null,
-            addressLine: address.line,
-            city: address.city,
-            state: address.state,
-            postalCode: address.postalCode,
-            country: address.country,
-            paymentMethod: method,
-            couponCode: percent ? coupon!.code : null,
-            subtotal: totals.subtotal.toFixed(2),
-            discount: totals.discount.toFixed(2),
-            shippingFee: totals.shipping.toFixed(2),
-            tax: totals.tax.toFixed(2),
-            total: totals.total.toFixed(2),
-            notes: clean(input.notes, 2000) || null,
-            items: {
-              create: items.map((i) => ({
-                productId: i.product.id,
-                variantId: i.variant?.id ?? null,
-                name: i.name,
-                sku: i.product.sku,
-                unitPrice: i.unit.toFixed(2),
-                quantity: i.quantity,
-                lineTotal: (i.unit * i.quantity).toFixed(2),
-              })),
-            },
+      const number = await newOrderNumber(tx);
+      if (!number) throw new CheckoutError("Could not create the order, please try again.");
+      return tx.order.create({
+        data: {
+          number,
+          customerId,
+          name: contact.name,
+          email: contact.email,
+          phone: contact.phone || null,
+          addressLine: address.line,
+          city: address.city,
+          state: address.state,
+          postalCode: address.postalCode,
+          country: address.country,
+          paymentMethod: method,
+          couponCode: percent ? coupon!.code : null,
+          subtotal: totals.subtotal.toFixed(2),
+          discount: totals.discount.toFixed(2),
+          shippingFee: totals.shipping.toFixed(2),
+          tax: totals.tax.toFixed(2),
+          total: totals.total.toFixed(2),
+          notes: clean(input.notes, 2000) || null,
+          items: {
+            create: items.map((i) => ({
+              productId: i.product.id,
+              variantId: i.variant?.id ?? null,
+              name: i.name,
+              sku: i.product.sku,
+              unitPrice: i.unit.toFixed(2),
+              quantity: i.quantity,
+              lineTotal: (i.unit * i.quantity).toFixed(2),
+            })),
           },
-          select: { id: true, number: true, total: true },
-        });
-      }
-      throw new CheckoutError("Could not create the order, please try again.");
+        },
+        select: { id: true, number: true, total: true },
+      });
     });
   } catch (e) {
     if (e instanceof CheckoutError) return { error: e.message };

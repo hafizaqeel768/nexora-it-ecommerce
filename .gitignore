@@ -46,3 +46,6 @@ next-env.d.ts
 
 # Windows download markers (created when copying files from Windows)
 *:Zone.Identifier
+
+# uploaded product photos (admin, Phase 9)
+/media/uploads/

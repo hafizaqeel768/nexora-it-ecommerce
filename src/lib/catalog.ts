@@ -101,6 +101,26 @@ export async function getShopResults(p: ShopParams): Promise<ShopResult> {
   };
 }
 
+export type SearchSuggestion = { slug: string; name: string; brand: string; category: string; price: string; image: string | null };
+
+/** Header live search (the prototype's sug()): first 6 matches in shop order, plus the total. */
+export async function getSearchSuggestions(q: string): Promise<{ products: SearchSuggestion[]; total: number }> {
+  const where: Prisma.ProductWhereInput = { status: "ACTIVE", AND: searchWhere(q) };
+  const [rows, total] = await Promise.all([
+    db.product.findMany({
+      where,
+      orderBy: orderBy.featured,
+      take: 6,
+      select: { slug: true, name: true, brand: true, price: true, image: true, category: { select: { name: true } } },
+    }),
+    db.product.count({ where }),
+  ]);
+  return {
+    products: rows.map((r) => ({ slug: r.slug, name: r.name, brand: r.brand, category: r.category.name, price: r.price.toString(), image: r.image })),
+    total,
+  };
+}
+
 export async function getCategoryName(slug: string | null) {
   if (!slug) return null;
   return (await db.category.findUnique({ where: { slug }, select: { name: true } }))?.name ?? null;

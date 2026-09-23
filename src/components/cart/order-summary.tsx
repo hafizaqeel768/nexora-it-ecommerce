@@ -1,9 +1,18 @@
 import { money } from "@/lib/format";
 import type { CartTotals } from "@/lib/pricing";
-import { STORE } from "@/lib/store-settings";
 
 // Totals block (the prototype's summary()).
-export function OrderSummary({ totals, promoPercent, children }: { totals: CartTotals; promoPercent?: number; children?: React.ReactNode }) {
+export function OrderSummary({
+  totals,
+  promoPercent,
+  taxPercent,
+  children,
+}: {
+  totals: CartTotals;
+  promoPercent?: number;
+  taxPercent: number;
+  children?: React.ReactNode;
+}) {
   const row = "flex justify-between py-[7px] text-14 text-muted";
   return (
     <div className="sticky top-[90px] rounded-18 border border-line bg-surface p-[22px] shadow-[0_8px_28px_#0000000d] max-lg:static">
@@ -23,7 +32,7 @@ export function OrderSummary({ totals, promoPercent, children }: { totals: CartT
         <span>{totals.shipping ? money(totals.shipping) : "Free"}</span>
       </div>
       <div className={row}>
-        <span>Est. tax ({STORE.taxPercent}%)</span>
+        <span>Est. tax ({taxPercent}%)</span>
         <span>{money(totals.tax)}</span>
       </div>
       <div className="mt-2 flex justify-between border-t border-line pt-3.5 text-18 font-extrabold text-ink">

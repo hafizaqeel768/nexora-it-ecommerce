@@ -3,7 +3,8 @@ import Link from "next/link";
 import { AddressForm, ProfileForm } from "@/components/account/account-forms";
 import { SignInPrompt } from "@/components/account/sign-in-prompt";
 import { db } from "@/lib/db";
-import { money } from "@/lib/format";
+import { StatusBadge } from "@/components/status-badge";
+import { money, shortDate } from "@/lib/format";
 import { accountOrdersWhere, getViewer, type Viewer } from "@/lib/viewer";
 
 export const metadata: Metadata = { title: "My Account | Nexora IT" };
@@ -15,10 +16,6 @@ const tabs = [
   { key: "addr", label: "Addresses" },
   { key: "profile", label: "Profile" },
 ] as const;
-
-// Status colours from the prototype's A_ST.
-const statusColor = { PENDING: "#d97706", PROCESSING: "#2563eb", SHIPPED: "#7c3aed", DELIVERED: "#16a34a", CANCELLED: "#dc2626" };
-const date = (d: Date) => d.toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" });
 
 // My account (the prototype's accHTML): orders, saved address, profile.
 export default async function AccountPage({ searchParams }: Props) {
@@ -97,13 +94,8 @@ async function OrderList({ viewer }: { viewer: Viewer }) {
         >
           <div className="mb-1.5 flex flex-wrap items-center gap-3.5">
             <b>{o.number}</b>
-            <span
-              className="inline-block rounded-pill px-2.5 py-1 text-12 font-bold capitalize"
-              style={{ color: statusColor[o.status], background: `${statusColor[o.status]}1f` }}
-            >
-              {o.status.toLowerCase()}
-            </span>
-            <span className="text-13 text-muted">{date(o.createdAt)}</span>
+            <StatusBadge status={o.status} />
+            <span className="text-13 text-muted">{shortDate(o.createdAt)}</span>
             {o.paymentStatus !== "PAID" && o.status !== "CANCELLED" && (
               <span className="text-12 text-warning">Awaiting payment</span>
             )}

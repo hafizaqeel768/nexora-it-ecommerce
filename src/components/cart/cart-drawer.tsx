@@ -4,6 +4,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
 import { CartLine } from "@/components/cart/cart-line";
+import { useStoreRules } from "@/components/store-rules-provider";
 import { itemCount, totalsOf, useCart } from "@/lib/cart-store";
 import { money } from "@/lib/format";
 
@@ -14,7 +15,7 @@ export function CartDrawer() {
   const [nudge, setNudge] = useState(false);
   const [nudgeDismissed, setNudgeDismissed] = useState(false);
   const count = itemCount(lines);
-  const subtotal = totalsOf(lines, 0).subtotal;
+  const subtotal = totalsOf(lines, 0, useStoreRules()).subtotal;
   const onCartPages = pathname === "/cart" || pathname.startsWith("/checkout") || pathname.startsWith("/order");
 
   useEffect(() => {

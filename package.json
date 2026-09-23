@@ -12,6 +12,7 @@
     "db:migrate": "prisma migrate dev",
     "db:seed": "prisma db seed",
     "db:studio": "node scripts/studio.mjs",
+    "admin:promote": "tsx scripts/admin-role.ts",
     "dev:docker": "prisma generate && next dev --turbopack -p 3100 --hostname 0.0.0.0"
   },
   "dependencies": {
