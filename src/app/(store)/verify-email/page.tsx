@@ -3,7 +3,7 @@ import Link from "next/link";
 import { consumeToken } from "@/lib/auth-tokens";
 import { db } from "@/lib/db";
 
-export const metadata: Metadata = { title: "Confirm email | Nexora IT", robots: { index: false } };
+export const metadata: Metadata = { title: "Confirm email", robots: { index: false } };
 
 type Props = { searchParams: Promise<{ token?: string }> };
 

@@ -62,3 +62,25 @@ export function ExportLink({ href }: { href: string }) {
     </a>
   );
 }
+
+/** Checkbox with a label and optional hint (settings forms). */
+export function CheckField({ name, label, hint, defaultChecked }: { name: string; label: string; hint?: string; defaultChecked?: boolean }) {
+  return (
+    <label className="flex cursor-pointer items-start gap-2.5 text-14">
+      <input type="checkbox" name={name} defaultChecked={defaultChecked} className="mt-1 size-4 accent-accent" />
+      <span>
+        {label}
+        {hint && <small className="block text-12 text-muted">{hint}</small>}
+      </span>
+    </label>
+  );
+}
+
+export function SectionTitle({ children, hint }: { children: React.ReactNode; hint?: string }) {
+  return (
+    <div className="mb-3">
+      <h3 className="text-16 font-bold">{children}</h3>
+      {hint && <p className="mt-0.5 text-13 text-muted">{hint}</p>}
+    </div>
+  );
+}

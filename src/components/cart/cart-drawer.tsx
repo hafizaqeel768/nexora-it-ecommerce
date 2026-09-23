@@ -4,8 +4,8 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
 import { CartLine } from "@/components/cart/cart-line";
-import { useStoreRules } from "@/components/store-rules-provider";
 import { itemCount, totalsOf, useCart } from "@/lib/cart-store";
+import { NO_SHIPPING_OR_TAX } from "@/lib/pricing";
 import { money } from "@/lib/format";
 
 // Mini cart (the prototype's #mini + #ov) and the "resume checkout" nudge. Also loads the saved cart.
@@ -15,7 +15,7 @@ export function CartDrawer() {
   const [nudge, setNudge] = useState(false);
   const [nudgeDismissed, setNudgeDismissed] = useState(false);
   const count = itemCount(lines);
-  const subtotal = totalsOf(lines, 0, useStoreRules()).subtotal;
+  const subtotal = totalsOf(lines, 0, NO_SHIPPING_OR_TAX).subtotal;
   const onCartPages = pathname === "/cart" || pathname.startsWith("/checkout") || pathname.startsWith("/order");
 
   useEffect(() => {

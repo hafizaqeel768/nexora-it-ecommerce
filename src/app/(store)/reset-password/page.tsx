@@ -3,7 +3,7 @@ import Link from "next/link";
 import { ResetPasswordForm } from "@/components/account/password-forms";
 import { peekToken } from "@/lib/auth-tokens";
 
-export const metadata: Metadata = { title: "Choose a new password | Nexora IT", robots: { index: false } };
+export const metadata: Metadata = { title: "Choose a new password", robots: { index: false } };
 
 type Props = { searchParams: Promise<{ token?: string }> };
 

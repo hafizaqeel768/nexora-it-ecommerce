@@ -34,8 +34,8 @@ export async function GET(request: Request, { params }: { params: Promise<{ kind
   if (kind === "customers") {
     const rows = await customerRows();
     return csvResponse(`customers-${day}.csv`, [
-      ["Name", "Email", "Account", "Orders", "Total spent", "Last order"],
-      ...rows.map((c) => [c.name, c.email, c.role === "ADMIN" ? "admin" : c.registered ? "registered" : "guest", c.orders, c.spent.toFixed(2), c.lastOrder]),
+      ["Name", "Email", "Account", "Tax-exempt", "Orders", "Total spent", "Last order"],
+      ...rows.map((c) => [c.name, c.email, c.role === "ADMIN" ? "admin" : c.registered ? "registered" : "guest", c.taxExempt ? "yes" : "no", c.orders, c.spent.toFixed(2), c.lastOrder]),
     ]);
   }
 

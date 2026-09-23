@@ -23,7 +23,7 @@ export async function deliverOrderEmail(id: string): Promise<boolean> {
   const claim = await db.orderEmail.updateMany({ where: { id, sentAt: null, attempts: row.attempts }, data: { attempts: { increment: 1 } } });
   if (claim.count !== 1) return false;
 
-  const mail = row.kind === "CONFIRMATION" ? orderConfirmationEmail(row.order, row.to) : orderStatusEmail(row.order, row.orderStatus, row.to);
+  const mail = row.kind === "CONFIRMATION" ? await orderConfirmationEmail(row.order, row.to) : await orderStatusEmail(row.order, row.orderStatus, row.to);
   const result = await sendMail(mail);
   await db.orderEmail.update({
     where: { id },

@@ -4,7 +4,7 @@ import { redirect } from "next/navigation";
 import { switchToAdminAccount } from "@/app/actions/account";
 import { getViewer } from "@/lib/viewer";
 
-export const metadata: Metadata = { title: "No admin access | Nexora IT", robots: { index: false } };
+export const metadata: Metadata = { title: "No admin access", robots: { index: false } };
 
 // Where a signed-in customer lands when opening /admin: says which account is signed in and how to switch.
 export default async function NoAccessPage() {

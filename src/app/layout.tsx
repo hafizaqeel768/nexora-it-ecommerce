@@ -1,15 +1,17 @@
 import type { Metadata, Viewport } from "next";
-import { StoreRulesProvider } from "@/components/store-rules-provider";
 import { WishlistProvider } from "@/components/wishlist/wishlist-provider";
-import { getStoreRules } from "@/lib/settings";
+import { getConfig } from "@/lib/config";
 import { getViewer } from "@/lib/viewer";
 import "./globals.css";
 
-export const metadata: Metadata = {
-  title: "Nexora IT – Hardware & Solutions",
-  description:
-    "Business-grade IT hardware and solutions, sourced and supported by people who care.",
-};
+// Titles and description follow Settings → Store details; pages set only their own part ("Cart" → "Cart | Store").
+export async function generateMetadata(): Promise<Metadata> {
+  const store = await getConfig("store");
+  return {
+    title: { template: `%s | ${store.name}`, default: store.tagline ? `${store.name} – ${store.tagline}` : store.name },
+    description: store.footerAbout || undefined,
+  };
+}
 
 export const viewport: Viewport = {
   viewportFit: "cover",
@@ -22,16 +24,14 @@ export default async function RootLayout({
 }: Readonly<{
   children: React.ReactNode;
 }>) {
-  const [viewer, rules] = await Promise.all([getViewer(), getStoreRules()]);
+  const viewer = await getViewer();
   // Store chrome (header, footer, cart) lives in (store)/layout.tsx; /admin has its own layout.
   return (
     <html lang="en">
       <body>
-        <StoreRulesProvider rules={rules}>
-          <WishlistProvider signedIn={!!viewer} initialIds={viewer?.wishlistIds ?? []}>
-            {children}
-          </WishlistProvider>
-        </StoreRulesProvider>
+        <WishlistProvider signedIn={!!viewer} initialIds={viewer?.wishlistIds ?? []}>
+          {children}
+        </WishlistProvider>
       </body>
     </html>
   );

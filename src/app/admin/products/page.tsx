@@ -9,7 +9,7 @@ import { requireAdminPage } from "@/lib/admin";
 import { productListWhere } from "@/lib/admin-queries";
 import { db } from "@/lib/db";
 import { money } from "@/lib/format";
-import { getStoreRules } from "@/lib/settings";
+import { getConfig } from "@/lib/config";
 
 const PER_PAGE = 50;
 
@@ -26,7 +26,7 @@ export default async function AdminProducts({ searchParams }: Props) {
   const where = await productListWhere(q, cat, status);
 
   const [{ lowStockAt }, total, products, categories] = await Promise.all([
-    getStoreRules(),
+    getConfig("inventory"),
     db.product.count({ where }),
     db.product.findMany({
       where,

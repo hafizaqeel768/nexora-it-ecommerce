@@ -293,23 +293,3 @@ export async function runEmailJobsNow(): Promise<AdminFormState> {
     ok: `Order emails: ${r.orderEmails.sent} of ${r.orderEmails.tried} sent. Cart reminders: ${r.cartReminders.sent} of ${r.cartReminders.due} sent.`,
   };
 }
-
-// ---------- settings ----------
-
-export async function saveSettings(_: AdminFormState, form: FormData): Promise<AdminFormState> {
-  await assertAdmin();
-  const tax = money(text(form, "taxPercent", 10));
-  const free = money(text(form, "freeShippingFrom", 20));
-  const fee = money(text(form, "shippingFee", 20));
-  const low = Number(text(form, "lowStockAt", 10));
-  const fields: Record<string, string> = {};
-  if (tax == null || tax > 50) fields.taxPercent = "0 to 50.";
-  if (free == null) fields.freeShippingFrom = "Amount, 0 or more.";
-  if (fee == null) fields.shippingFee = "Amount, 0 or more.";
-  if (!Number.isInteger(low) || low < 0 || low > 100000) fields.lowStockAt = "Whole number, 0 or more.";
-  if (Object.keys(fields).length) return { error: "Please check the highlighted fields.", fields };
-  const data = { taxPercent: tax!, freeShippingFrom: free!, shippingFee: fee!, lowStockAt: low };
-  await db.storeSettings.upsert({ where: { id: 1 }, create: { id: 1, ...data }, update: data });
-  revalidatePath("/", "layout");
-  return { ok: "Settings saved. Cart, checkout and the header use them now." };
-}

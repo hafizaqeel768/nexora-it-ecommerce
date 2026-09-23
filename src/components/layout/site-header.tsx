@@ -4,9 +4,10 @@ import { CartButton } from "@/components/cart/cart-button";
 import { ChatIcon } from "@/components/icons";
 import { CategoryMenu } from "@/components/layout/category-menu";
 import { HeaderSearch } from "@/components/layout/header-search";
+import { StoreLogo } from "@/components/store-logo";
 import { WishlistHeaderLink } from "@/components/wishlist/wishlist-button";
 import { db } from "@/lib/db";
-import { getStoreRules } from "@/lib/settings";
+import { getConfig } from "@/lib/config";
 import { mainNav } from "@/lib/site-nav";
 import { accountOrdersWhere, getViewer } from "@/lib/viewer";
 
@@ -18,7 +19,7 @@ const topLink =
 export async function SiteHeader() {
   const viewer = await getViewer();
   const orderCount = viewer ? await db.order.count({ where: accountOrdersWhere(viewer) }) : 0;
-  const { freeShippingFrom } = await getStoreRules();
+  const store = await getConfig("store");
 
   return (
     <>
@@ -27,9 +28,7 @@ export async function SiteHeader() {
         <div className="border-b border-header-line text-caption text-header-text">
           <div className="wrap flex flex-wrap justify-between max-md:justify-end">
             <span className="flex flex-wrap max-md:hidden">
-              <span className="inline-flex items-center gap-2 py-1.5 pr-3">
-                🚚 Free shipping on orders over ${freeShippingFrom.toLocaleString("en-US")}
-              </span>
+              {store.announcement && <span className="inline-flex items-center gap-2 py-1.5 pr-3">{store.announcement}</span>}
             </span>
             <span className="flex flex-wrap">
               <Link href="/#contact" className={`${topLink} pl-3.5`}>
@@ -65,10 +64,8 @@ export async function SiteHeader() {
 
         {/* Logo, search, wishlist, cart */}
         <div className="wrap flex items-center gap-[22px] py-2.5 max-md:flex-wrap">
-          <Link href="/" className="block flex-none text-header-ink max-md:order-1">
-            <b className="block text-28 leading-none font-black tracking-[-1.2px]">
-              NEXORA<span className="text-accent">.IT</span>
-            </b>
+          <Link href="/" aria-label={`${store.name} home`} className="block flex-none text-header-ink max-md:order-1">
+            <StoreLogo store={store} className="text-28 tracking-[-1.2px]" />
           </Link>
 
           <HeaderSearch />

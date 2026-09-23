@@ -5,10 +5,14 @@ import { after } from "next/server";
 import { auth } from "@/auth";
 import { PaymentMethod, Prisma } from "@/generated/prisma/client";
 import { db } from "@/lib/db";
+import { money } from "@/lib/format";
 import { cartTotals, lineUnitPrice } from "@/lib/pricing";
 import { deliverOrderEmail, queueOrderEmail } from "@/lib/order-emails";
 import { cancelUnpaidOrder, newOrderNumber } from "@/lib/orders";
-import { getStoreRules } from "@/lib/settings";
+import { getConfig } from "@/lib/config";
+import { countryName, isCountryCode, stateKey } from "@/lib/countries";
+import { getShippingZones, getTaxRates } from "@/lib/shipping-data";
+import { shippingOptions, taxRateFor } from "@/lib/shipping";
 import { getStripe, stripeEnabled } from "@/lib/stripe";
 
 // ---------- promo codes ----------
@@ -25,7 +29,9 @@ export type CheckoutInput = {
   lines: { productId: string; variantId: string | null; quantity: number }[];
   couponCode: string | null;
   contact: { name: string; email: string; phone: string };
+  /** country: ISO 3166 code */
   address: { line: string; city: string; state: string; postalCode: string; country: string };
+  shippingMethodId: string;
   payment: "card" | "purchase_order" | "bank_transfer";
   notes: string;
 };
@@ -38,6 +44,8 @@ const paymentMethods = {
   purchase_order: PaymentMethod.PURCHASE_ORDER,
   bank_transfer: PaymentMethod.BANK_TRANSFER,
 } as const;
+/** Checkout value → key in the Payments settings */
+const paymentSetting = { card: "card", purchase_order: "purchaseOrder", bank_transfer: "bankTransfer" } as const;
 
 class CheckoutError extends Error {}
 
@@ -87,36 +95,46 @@ async function orderCustomerId(tx: Tx, accountId: string | null, contact: Contac
 }
 
 /**
- * Creates the order from the cart. Prices, stock and the coupon are re-checked from the database;
- * the browser only says which products and how many. Card payments then go to Stripe Checkout.
+ * Creates the order from the cart. Prices, stock, coupon, shipping, tax and every checkout setting are
+ * re-checked on the server; the browser only says which products, how many, the address and its choices.
+ * Card payments then go to Stripe Checkout.
  */
 export async function placeOrder(input: CheckoutInput): Promise<CheckoutResult> {
+  const [settings, payments, zones, taxRates] = await Promise.all([getConfig("checkout"), getConfig("payments"), getShippingZones(), getTaxRates()]);
+  const accountId = (await auth())?.user?.id ?? null;
+  const account = accountId ? await db.customer.findFirst({ where: { id: accountId, passwordHash: { not: null } }, select: { taxExempt: true } }) : null;
+  if (!settings.guestCheckout && !account) return { error: "Please log in or create an account to check out." };
+
   const contact = { name: clean(input.contact?.name, 120), email: clean(input.contact?.email, 200), phone: clean(input.contact?.phone, 40) };
+  const countryCode = clean(input.address?.country, 2).toUpperCase();
+  const rawState = clean(input.address?.state, 100);
   const address = {
     line: clean(input.address?.line, 200),
     city: clean(input.address?.city, 100),
-    state: clean(input.address?.state, 100),
+    state: countryCode === "US" ? stateKey("US", rawState) : rawState,
     postalCode: clean(input.address?.postalCode, 20),
-    country: clean(input.address?.country, 100),
+    country: isCountryCode(countryCode) ? countryName(countryCode) : "",
   };
   const fields: Record<string, string> = {};
   if (!contact.name) fields.name = "Please enter your name.";
   if (!EMAIL.test(contact.email)) fields.email = "Please enter a valid email address.";
+  if (settings.requirePhone && contact.phone.replace(/\D/g, "").length < 6) fields.phone = "Please enter a phone number.";
   if (!address.line) fields.line = "Please enter your address.";
   if (!address.city) fields.city = "Please enter your city.";
   if (!address.postalCode) fields.postalCode = "Please enter a ZIP / postal code.";
-  if (!address.country) fields.country = "Please enter your country.";
+  if (!address.country) fields.country = "Please choose your country.";
+  if (countryCode === "US" && !address.state) fields.state = "Please choose your state.";
   if (Object.keys(fields).length) return { error: "Please check the highlighted fields.", fields };
 
   const method = paymentMethods[input.payment];
-  if (!method) return { error: "Please choose a payment method." };
+  if (!method || !payments[paymentSetting[input.payment]].enabled) return { error: "Please choose a payment method." };
   if (method === PaymentMethod.CREDIT_CARD && !stripeEnabled) return { error: "Card payments are not available right now." };
 
   const lines = (input.lines ?? []).filter((l) => Number.isInteger(l.quantity) && l.quantity > 0 && l.quantity <= 10000);
   if (!lines.length) return { error: "Your cart is empty." };
 
-  const accountId = (await auth())?.user?.id ?? null;
-  const rules = await getStoreRules();
+  // Tax exemption only applies to signed-in accounts the store marked as exempt.
+  const tax = account?.taxExempt ? null : taxRateFor(taxRates, countryCode, address.state);
 
   let order: { id: string; number: string; total: Prisma.Decimal; emailId: string | null };
   try {
@@ -148,7 +166,17 @@ export async function placeOrder(input: CheckoutInput): Promise<CheckoutResult> 
         ? await tx.coupon.findUnique({ where: { code: input.couponCode.trim().toUpperCase() } })
         : null;
       const percent = coupon?.active ? coupon.percentOff : 0;
-      const totals = cartTotals(items.map((i) => ({ unitPrice: i.unit, quantity: i.quantity })), percent, rules);
+      const priced = items.map((i) => ({ unitPrice: i.unit, quantity: i.quantity }));
+      const goods = cartTotals(priced, percent, { shipping: 0, taxPercent: 0 });
+      const discounted = goods.subtotal - goods.discount;
+      if (settings.minOrder > 0 && discounted < settings.minOrder) {
+        throw new CheckoutError(`The minimum order is ${money(settings.minOrder)} (after discounts).`);
+      }
+      const options = shippingOptions(zones, countryCode, address.state, discounted);
+      if (!options.length) throw new CheckoutError(`Sorry, we don't ship to ${address.country}${address.state ? ` (${address.state})` : ""}.`);
+      const shipping = options.find((o) => o.id === input.shippingMethodId);
+      if (!shipping) throw new CheckoutError("Please choose a shipping method.");
+      const totals = cartTotals(priced, percent, { shipping: shipping.cost, taxPercent: tax?.rate ?? 0, taxShipping: tax?.shipping });
 
       // Reserve stock for tracked products (released again if a card payment is cancelled).
       for (const i of items) {
@@ -177,6 +205,9 @@ export async function placeOrder(input: CheckoutInput): Promise<CheckoutResult> 
           state: address.state,
           postalCode: address.postalCode,
           country: address.country,
+          countryCode,
+          shippingMethod: shipping.name,
+          taxRate: tax?.rate ?? 0,
           paymentMethod: method,
           couponCode: percent ? coupon!.code : null,
           subtotal: totals.subtotal.toFixed(2),
@@ -229,7 +260,7 @@ export async function placeOrder(input: CheckoutInput): Promise<CheckoutResult> 
           price_data: {
             currency: "usd",
             unit_amount: Math.round(Number(order.total) * 100),
-            product_data: { name: `Nexora IT order ${order.number}`, description: `${lines.length} item${lines.length === 1 ? "" : "s"} incl. shipping and tax` },
+            product_data: { name: `${(await getConfig("store")).name} order ${order.number}`, description: `${lines.length} item${lines.length === 1 ? "" : "s"} incl. shipping and tax` },
           },
         },
       ],

@@ -189,6 +189,8 @@ model Customer {
   emailVerifiedAt   DateTime?
   /// Sessions issued before this are rejected (password reset signs out other devices)
   passwordChangedAt DateTime?
+  /// B2B tax exemption (resale/exempt certificate on file): no tax at checkout when signed in
+  taxExempt     Boolean        @default(false)
   authTokens    AuthToken[]
   savedCart     SavedCart?
   addressLine   String?
@@ -229,6 +231,12 @@ model Order {
   state           String
   postalCode      String
   country         String
+  /// ISO 3166 code of the shipping country (orders before Phase 11: null)
+  countryCode     String?
+  /// Shipping method name as chosen at checkout, e.g. "Standard (3–5 business days)"
+  shippingMethod  String?
+  /// Tax rate applied, in percent (null for older orders)
+  taxRate         Decimal?      @db.Decimal(6, 3)
   paymentMethod   PaymentMethod
   paymentStatus   PaymentStatus @default(UNPAID)
   /// Stripe Checkout session for card payments
@@ -327,15 +335,65 @@ model Quote {
   @@index([status])
 }
 
-/// Store rules edited in /admin/settings (the prototype's SET). A single row, id 1.
-model StoreSettings {
-  id               Int      @id @default(1)
-  taxPercent       Decimal  @default(8) @db.Decimal(5, 2)
-  freeShippingFrom Decimal  @default(500) @db.Decimal(10, 2)
-  shippingFee      Decimal  @default(25) @db.Decimal(10, 2)
-  /// Products at or below this stock show as low stock in the admin
-  lowStockAt       Int      @default(10)
-  updatedAt        DateTime @updatedAt
+/// Admin settings (Phase 11): one JSON document per section ("store", "checkout", "payments", "email",
+/// "inventory"). Shapes, defaults and validation live in src/lib/config.ts.
+model StoreConfig {
+  section   String   @id
+  value     Json
+  updatedAt DateTime @updatedAt
+}
+
+enum ShippingKind {
+  FLAT
+  PICKUP
+}
+
+/// Where the store ships. The first zone (by sortOrder) matching the address wins; a zone without
+/// countries is "rest of the world".
+model ShippingZone {
+  id        String           @id @default(cuid())
+  name      String
+  /// ISO 3166 country codes; empty = every country not matched by another zone
+  countries String[]         @default([])
+  /// Optional state codes (e.g. TX, CA); empty = the whole country
+  states    String[]         @default([])
+  sortOrder Int              @default(0)
+  methods   ShippingMethod[]
+  createdAt DateTime         @default(now())
+}
+
+model ShippingMethod {
+  id          String       @id @default(cuid())
+  zoneId      String
+  zone        ShippingZone @relation(fields: [zoneId], references: [id], onDelete: Cascade)
+  /// Shown at checkout, e.g. "Standard (3–5 business days)"
+  name        String
+  kind        ShippingKind @default(FLAT)
+  price       Decimal      @default(0) @db.Decimal(10, 2)
+  /// Free when the discounted subtotal reaches this amount
+  freeFrom    Decimal?     @db.Decimal(10, 2)
+  /// Only offered from this subtotal (e.g. freight for large orders)
+  minSubtotal Decimal?     @db.Decimal(10, 2)
+  active      Boolean      @default(true)
+  sortOrder   Int          @default(0)
+
+  @@index([zoneId])
+}
+
+/// Sales tax. Most specific match wins: country + state, then country, then "*" (everywhere).
+model TaxRate {
+  id       String  @id @default(cuid())
+  name     String
+  /// ISO 3166 code, or "*" for every country
+  country  String
+  /// State code, or "" for the whole country
+  state    String  @default("")
+  /// Percent, e.g. 8.25
+  rate     Decimal @db.Decimal(6, 3)
+  /// Also charge this tax on the shipping fee
+  shipping Boolean @default(false)
+
+  @@unique([country, state])
 }
 
 enum AuthTokenPurpose {

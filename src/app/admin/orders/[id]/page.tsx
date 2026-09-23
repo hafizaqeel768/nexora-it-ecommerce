@@ -76,6 +76,7 @@ export default async function AdminOrder({ params }: Props) {
               {[order.city, order.state, order.postalCode].filter(Boolean).join(", ")}
               <br />
               {order.country}
+              {order.shippingMethod && <small className={`${small} mt-1`}>Shipping: {order.shippingMethod}</small>}
             </div>
             <div>
               <small className={small}>Payment</small>
@@ -138,11 +139,11 @@ export default async function AdminOrder({ params }: Props) {
                 </div>
               )}
               <div className={totalsRow}>
-                <span>Shipping</span>
+                <span>Shipping{order.shippingMethod ? ` · ${order.shippingMethod}` : ""}</span>
                 <span>{n(order.shippingFee) ? money(order.shippingFee) : "Free"}</span>
               </div>
               <div className={totalsRow}>
-                <span>Tax</span>
+                <span>Tax{order.taxRate != null ? ` (${n(order.taxRate)}%)` : ""}</span>
                 <span>{money(order.tax)}</span>
               </div>
               <div className="mt-1 flex justify-between border-t border-line pt-2 text-16 font-extrabold text-ink">

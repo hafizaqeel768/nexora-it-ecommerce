@@ -8,7 +8,7 @@ import { db } from "@/lib/db";
 import { emailTransport } from "@/lib/email";
 import { MAX_EMAIL_ATTEMPTS } from "@/lib/order-emails";
 import { money } from "@/lib/format";
-import { getStoreRules } from "@/lib/settings";
+import { getConfig } from "@/lib/config";
 
 const DAYS = 14;
 const counted = { status: { not: "CANCELLED" as const } };
@@ -17,7 +17,7 @@ const counted = { status: { not: "CANCELLED" as const } };
 // Revenue counts every order that isn't cancelled, like the prototype.
 export default async function AdminDashboard() {
   await requireAdminPage("/admin");
-  const { lowStockAt } = await getStoreRules();
+  const { lowStockAt } = await getConfig("inventory");
 
   const since = new Date();
   since.setHours(0, 0, 0, 0);
@@ -121,7 +121,7 @@ export default async function AdminDashboard() {
           ) : (
             <p className="text-muted">All products well stocked.</p>
           )}
-          <p className="mt-2 text-12 text-muted">Alert at {lowStockAt} units or fewer (Settings).</p>
+          <p className="mt-2 text-12 text-muted">Alert at {lowStockAt} units or fewer (Settings → Checkout & stock).</p>
         </div>
       </div>
 

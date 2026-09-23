@@ -11,7 +11,7 @@ type Props = { searchParams: Promise<Record<string, string | string[] | undefine
 
 export async function generateMetadata({ searchParams }: Props): Promise<Metadata> {
   const { category } = parseShopParams(await searchParams);
-  return { title: `${(await getCategoryName(category)) ?? "Shop"} | Nexora IT` };
+  return { title: `${(await getCategoryName(category)) ?? "Shop"}` };
 }
 
 // Catalog listing (the prototype's #/shop). Filters live in the URL; results come from Postgres.

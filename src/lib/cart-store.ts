@@ -5,7 +5,6 @@ import { create } from "zustand";
 import { createJSONStorage, persist } from "zustand/middleware";
 import { lineKey, type CartLine, type CartProduct } from "@/lib/cart-types";
 import { cartTotals, lineUnitPrice } from "@/lib/pricing";
-import type { StoreRules } from "@/lib/store-settings";
 
 type CartState = {
   lines: CartLine[];
@@ -64,7 +63,7 @@ export const unitPriceOf = (l: CartLine) => lineUnitPrice(l.price, l.tiers, l.qu
 
 export const itemCount = (lines: CartLine[]) => lines.reduce((n, l) => n + l.quantity, 0);
 
-export const totalsOf = (lines: CartLine[], promoPercent: number, rules: StoreRules) =>
+export const totalsOf = (lines: CartLine[], promoPercent: number, rules: Parameters<typeof cartTotals>[2]) =>
   cartTotals(
     lines.map((l) => ({ unitPrice: unitPriceOf(l), quantity: l.quantity })),
     promoPercent,

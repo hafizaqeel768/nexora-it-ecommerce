@@ -3,7 +3,7 @@ import { redirect } from "next/navigation";
 import { AuthForm } from "@/components/account/auth-form";
 import { getViewer } from "@/lib/viewer";
 
-export const metadata: Metadata = { title: "Create an account | Nexora IT" };
+export const metadata: Metadata = { title: "Create an account" };
 
 type Props = { searchParams: Promise<{ next?: string }> };
 

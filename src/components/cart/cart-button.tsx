@@ -1,15 +1,15 @@
 "use client";
 
 import { CartIcon } from "@/components/icons";
-import { useStoreRules } from "@/components/store-rules-provider";
 import { itemCount, totalsOf, useCart } from "@/lib/cart-store";
+import { NO_SHIPPING_OR_TAX } from "@/lib/pricing";
 
 // Header cart button: badge + "N items - USD x", opens the mini cart (the prototype's .cbox).
 export function CartButton() {
   const lines = useCart((s) => s.lines);
   const openDrawer = useCart((s) => s.openDrawer);
   const count = itemCount(lines);
-  const subtotal = totalsOf(lines, 0, useStoreRules()).subtotal;
+  const subtotal = totalsOf(lines, 0, NO_SHIPPING_OR_TAX).subtotal;
 
   return (
     <button

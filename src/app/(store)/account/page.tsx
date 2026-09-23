@@ -8,7 +8,7 @@ import { StatusBadge } from "@/components/status-badge";
 import { money, shortDate, statusLabel } from "@/lib/format";
 import { accountOrdersWhere, getViewer, type Viewer } from "@/lib/viewer";
 
-export const metadata: Metadata = { title: "My Account | Nexora IT" };
+export const metadata: Metadata = { title: "My Account" };
 
 type Props = { searchParams: Promise<{ t?: string }> };
 

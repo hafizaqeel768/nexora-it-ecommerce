@@ -1,3 +1,5 @@
+import { toggleTaxExempt } from "@/app/actions/settings";
+import { SwitchButton } from "@/components/admin/switch-button";
 import { card, EmptyRow, ExportLink, row, table, td, th } from "@/components/admin/ui";
 import { requireAdminPage } from "@/lib/admin";
 import { customerRows } from "@/lib/admin-queries";
@@ -23,6 +25,9 @@ export default async function AdminCustomers() {
               <th className={th}>Orders</th>
               <th className={th}>Total spent</th>
               <th className={th}>Last order</th>
+              <th className={th} title="No tax at checkout when signed in (B2B exemption certificate on file)">
+                Tax-exempt
+              </th>
             </tr>
           </thead>
           <tbody>
@@ -41,10 +46,17 @@ export default async function AdminCustomers() {
                   <td className={td}>{c.orders}</td>
                   <td className={td}>{money(c.spent)}</td>
                   <td className={`${td} whitespace-nowrap`}>{c.lastOrder ? shortDate(c.lastOrder) : "—"}</td>
+                  <td className={td}>
+                    {c.registered ? (
+                      <SwitchButton on={c.taxExempt} action={toggleTaxExempt.bind(null, c.id)} label={`${c.name}: ${c.taxExempt ? "tax-exempt" : "pays tax"}`} />
+                    ) : (
+                      <span className="text-12 text-muted" title="Only registered accounts can be tax-exempt">—</span>
+                    )}
+                  </td>
                 </tr>
               ))
             ) : (
-              <EmptyRow cols={6}>No customers yet.</EmptyRow>
+              <EmptyRow cols={7}>No customers yet.</EmptyRow>
             )}
           </tbody>
         </table>

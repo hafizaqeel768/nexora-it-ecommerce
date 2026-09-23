@@ -26,6 +26,7 @@ nextjs-ecommerce/
 │   ├── PHASE-8-ACCOUNTS.md           ← login/register, account, wishlist report
 │   ├── PHASE-9-ADMIN.md              ← admin panel report (+ header search fix)
 │   ├── PHASE-10-EMAILS.md            ← emails, verification, password reset, cart reminders, final QA
+│   ├── PHASE-11-STORE-CONFIGURATION.md ← admin settings: store details, shipping, tax, payments, checkout, email
 │   └── kijero-products.json          ← real product catalog (299 entries) used by the seed
 ├── media/
 │   ├── products/                     ← real product photos
@@ -117,6 +118,33 @@ Treat it as an executable spec, not just a visual mockup — the JS logic in it 
 - Real order-status emails via Resend (replacing the prototype's simulated log)
 - Abandoned-cart reminder job
 - Final QA pass across all phases
+
+## Store-management roadmap (agreed 2026-09-23, after Phase 10)
+
+Goal: a non-technical owner can run and configure the store from `/admin`, Magento-style, without code changes.
+
+### Phase 11 — Store configuration
+- Settings tabs: **Store details** (name, logo, contacts, address, social links, footer text, announcement bar), **Shipping** (zones by country/state, methods and rates, free-over thresholds, local pickup), **Tax** (rates by country/state, tax-exempt B2B customers), **Payments** (switch methods on/off, labels, bank/PO instructions), **Checkout** (guest checkout, minimum order, required phone, order notes), **Email** (sender, editable subjects and intro texts), inventory low-stock alert
+- Storefront, checkout, order pages and emails read these settings
+- **Checkpoint:** every setting changed in the admin shows up in the storefront/checkout/emails without a code change
+
+### Phase 12 — Catalog management
+- Categories and brands (images, order), product variants and bulk tiers, review moderation + customer review form, product CSV import
+
+### Phase 13 — Order & customer operations
+- Edit order lines/prices (e.g. converted quotes), Stripe refunds, invoices/packing slips, tracking numbers in the Shipped email, internal notes, customer detail page
+
+### Phase 14 — Content (CMS)
+- Home page banners/sections, menu, FAQ, info pages (Privacy, Terms, Shipping, Returns), newsletter sign-ups
+
+### Phase 15 — Marketing
+- Coupons: fixed amount, free shipping, expiry, minimum order, usage limits, once per customer
+
+### Phase 16 — Staff & security
+- Staff roles, invite staff from the admin, activity log, login rate limiting, admin 2-step login
+
+### Phase 17 — Launch readiness
+- Sitemap/robots, editable SEO fields, performance, backups, deployment
 
 ## Working agreement
 

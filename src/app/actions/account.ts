@@ -82,7 +82,7 @@ export async function register(_: FormState, form: FormData): Promise<FormState>
 async function sendVerification(customerId: string, name: string, email: string) {
   const token = await issueToken(customerId, "VERIFY_EMAIL");
   if (!token) return false;
-  const mail = verifyEmail(name, email, `${APP_URL}/verify-email?token=${token}`);
+  const mail = await verifyEmail(name, email, `${APP_URL}/verify-email?token=${token}`);
   after(async () => {
     const res = await sendMail(mail);
     if (!res.ok) console.error(`[email] verification for ${email} failed: ${res.error}`);
@@ -109,7 +109,7 @@ export async function requestPasswordReset(_: FormState, form: FormData): Promis
   if (customer?.passwordHash) {
     const token = await issueToken(customer.id, "RESET_PASSWORD");
     if (token) {
-      const mail = resetPasswordEmail(customer.name, email, `${APP_URL}/reset-password?token=${token}`);
+      const mail = await resetPasswordEmail(customer.name, email, `${APP_URL}/reset-password?token=${token}`);
       after(async () => {
         const res = await sendMail(mail);
         if (!res.ok) console.error(`[email] password reset for ${email} failed: ${res.error}`);

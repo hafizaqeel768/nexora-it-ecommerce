@@ -13,8 +13,8 @@ type Props = { params: Promise<{ slug: string }> };
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const product = await getProduct((await params).slug);
-  if (!product) return { title: "Product not found | Nexora IT" };
-  return { title: `${product.name} | Nexora IT`, description: product.description?.slice(0, 160) ?? undefined };
+  if (!product) return { title: "Product not found" };
+  return { title: `${product.name}`, description: product.description?.slice(0, 160) ?? undefined };
 }
 
 // Product detail page (the prototype's #/product/:id).

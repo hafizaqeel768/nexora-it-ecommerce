@@ -26,6 +26,7 @@ export const getViewer = cache(async () => {
       registeredAt: true,
       emailVerifiedAt: true,
       passwordChangedAt: true,
+      taxExempt: true,
       addressLine: true,
       city: true,
       state: true,

@@ -34,6 +34,7 @@ export type CustomerRow = {
   email: string;
   role: "CUSTOMER" | "ADMIN";
   registered: boolean;
+  taxExempt: boolean;
   orders: number;
   spent: number;
   lastOrder: Date | null;
@@ -45,7 +46,7 @@ export type CustomerRow = {
  */
 export async function customerRows(): Promise<CustomerRow[]> {
   const [customers, byEmail, spentByEmail] = await Promise.all([
-    db.customer.findMany({ select: { id: true, name: true, email: true, role: true, passwordHash: true } }),
+    db.customer.findMany({ select: { id: true, name: true, email: true, role: true, passwordHash: true, taxExempt: true } }),
     db.order.groupBy({ by: ["email"], _count: { _all: true }, _max: { createdAt: true } }),
     db.order.groupBy({ by: ["email"], where: { status: { not: "CANCELLED" } }, _sum: { total: true } }),
   ]);
@@ -64,7 +65,7 @@ export async function customerRows(): Promise<CustomerRow[]> {
   return customers
     .map((c) => {
       const s = stats.get(c.email.toLowerCase()) ?? { orders: 0, spent: 0, lastOrder: null };
-      return { id: c.id, name: c.name, email: c.email, role: c.role, registered: !!c.passwordHash, ...s, spent: Math.round(s.spent * 100) / 100 };
+      return { id: c.id, name: c.name, email: c.email, role: c.role, registered: !!c.passwordHash, taxExempt: c.taxExempt, ...s, spent: Math.round(s.spent * 100) / 100 };
     })
     .sort((a, b) => b.spent - a.spent || a.name.localeCompare(b.name));
 }

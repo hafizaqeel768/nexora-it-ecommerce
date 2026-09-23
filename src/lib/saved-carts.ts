@@ -90,7 +90,7 @@ export async function sendAbandonedCartReminders(limit = 50) {
       price: lineUnitPrice(l.price, l.tiers, l.quantity, l.variantDelta),
     }));
     const total = Math.round(items.reduce((s, i) => s + i.price * i.quantity, 0) * 100) / 100;
-    const res = await sendMail(abandonedCartEmail(cart.customer.name, cart.customer.email, items, total));
+    const res = await sendMail(await abandonedCartEmail(cart.customer.name, cart.customer.email, items, total));
     if (res.ok) sent++;
     else {
       // Try again on the next run.

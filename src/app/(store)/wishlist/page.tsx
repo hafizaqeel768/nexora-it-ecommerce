@@ -6,7 +6,7 @@ import { db } from "@/lib/db";
 import { cardInclude, toCard } from "@/lib/products";
 import { getViewer } from "@/lib/viewer";
 
-export const metadata: Metadata = { title: "Wishlist | Nexora IT" };
+export const metadata: Metadata = { title: "Wishlist" };
 
 // My wishlist (the prototype's wishlistHTML), newest first. Products that went inactive are skipped.
 export default async function WishlistPage() {
