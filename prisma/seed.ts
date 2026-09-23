@@ -13,6 +13,7 @@ import {
   Availability,
   OrderStatus,
   PaymentMethod,
+  PaymentStatus,
   PrismaClient,
   ProductCondition,
   QuoteStatus,
@@ -368,6 +369,10 @@ async function seedDemo(
         country: "United States",
         paymentMethod: paymentMethod[payments[i % payments.length]],
         status: orderStatus[statuses[i % statuses.length]],
+        // Orders that are being fulfilled have been paid; pending and cancelled ones haven't.
+        paymentStatus: ["Processing", "Shipped", "Delivered"].includes(statuses[i % statuses.length])
+          ? PaymentStatus.PAID
+          : PaymentStatus.UNPAID,
         subtotal: money(subtotal),
         shippingFee: money(shippingFee),
         tax: money(total - subtotal - shippingFee),

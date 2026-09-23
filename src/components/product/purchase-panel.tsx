@@ -2,10 +2,13 @@
 
 import Link from "next/link";
 import { useState } from "react";
+import { AddToCartButton } from "@/components/cart/add-to-cart-button";
 import { money, stars } from "@/lib/format";
 import { lineUnitPrice, tierUnitPrice, type Tier } from "@/lib/pricing";
 
 type Props = {
+  productId: string;
+  image: string | null;
   slug: string;
   name: string;
   brand: string;
@@ -21,7 +24,7 @@ type Props = {
 };
 
 // Product info column (the prototype's .pinfo): live price for quantity/variant, bulk tiers, specs, buy row.
-// "Add to cart" is wired in Phase 7 and "Save for later" in Phase 8.
+// "Save for later" is wired in Phase 8.
 export function PurchasePanel(p: Props) {
   const [variant, setVariant] = useState(0);
   const [qty, setQty] = useState(1);
@@ -137,9 +140,23 @@ export function PurchasePanel(p: Props) {
             +
           </button>
         </div>
-        <button type="button" className={btn} disabled={out}>
-          Add to cart
-        </button>
+        <AddToCartButton
+          className={`${btn} disabled:cursor-not-allowed disabled:opacity-50`}
+          quantity={qty}
+          product={{
+            productId: p.productId,
+            slug: p.slug,
+            name: p.name,
+            image: p.image,
+            price: p.price,
+            tiers: p.tiers,
+            variantId: p.variants[variant]?.id ?? null,
+            variantName: p.variants[variant] ? `${p.variants[variant].attribute}: ${p.variants[variant].name}` : null,
+            variantDelta: delta,
+            maxQty,
+            available: !out,
+          }}
+        />
         <Link href={`/?quote=${encodeURIComponent(p.slug)}#contact`} className={outline}>
           Request quote
         </Link>

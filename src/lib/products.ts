@@ -1,4 +1,5 @@
 // Product queries shared by pages (server-only). Returns plain, serializable data for components.
+import type { CartProduct } from "@/lib/cart-types";
 import { db } from "@/lib/db";
 
 export type ProductCardData = {
@@ -14,10 +15,14 @@ export type ProductCardData = {
   image: string | null;
   hoverImage: string | null;
   badge: "sale" | "bulk" | "options" | null;
+  /** For "Add to cart" on the card (default variant, like the prototype) */
+  cart: CartProduct;
 };
 
 export const cardInclude = {
   category: { include: { parent: true } },
+  priceTiers: { orderBy: { minQty: "asc" } },
+  variants: { orderBy: { sortOrder: "asc" }, take: 1 },
   _count: { select: { priceTiers: true, variants: true } },
 } as const;
 
@@ -42,6 +47,19 @@ export function toCard(p: CardRow): ProductCardData {
     hoverImage: p.gallery[0] ?? null,
     // Same priority as the prototype's card(): Sale, then Bulk pricing, then Options.
     badge: p.compareAtPrice ? "sale" : p._count.priceTiers ? "bulk" : p._count.variants ? "options" : null,
+    cart: {
+      productId: p.id,
+      slug: p.slug,
+      name: p.name,
+      image: p.image,
+      price: Number(p.price),
+      tiers: p.priceTiers.map((t) => ({ minQty: t.minQty, maxQty: t.maxQty, multiplier: Number(t.multiplier) })),
+      variantId: p.variants[0]?.id ?? null,
+      variantName: p.variants[0] ? `${p.variants[0].attribute}: ${p.variants[0].name}` : null,
+      variantDelta: p.variants[0] ? Number(p.variants[0].priceDelta) : 0,
+      maxQty: p.stock ?? 999,
+      available: p.availability !== "OUT_OF_STOCK" && p.stock !== 0,
+    },
   };
 }
 

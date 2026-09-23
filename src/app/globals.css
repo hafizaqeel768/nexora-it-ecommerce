@@ -5,8 +5,12 @@
  * Tailwind v4: tokens live here in @theme, there is no tailwind.config.ts.
  */
 
-/* Themable surface colors (light by default, dark via OS preference or data-theme="dark"). */
+/*
+ * Surface colors. The design is a light theme: the prototype's dark-mode block only half-applies there
+ * (most panels are hard-coded white), so the site always renders light, whatever the OS setting.
+ */
 :root {
+  color-scheme: light;
   --bg: #f7f7f7;
   --surface: #fff;
   --ink: #111;
@@ -14,26 +18,6 @@
   --line: #e3e3e3;
   --hero: #0a0a0a;
   --hero-ink: #fff;
-}
-
-@media (prefers-color-scheme: dark) {
-  :root:not([data-theme="light"]) {
-    --bg: #0a0a0a;
-    --surface: #151515;
-    --ink: #f2f2f2;
-    --muted: #9a9a9a;
-    --line: #2a2a2a;
-    --hero: #000;
-  }
-}
-
-:root[data-theme="dark"] {
-  --bg: #0a0a0a;
-  --surface: #151515;
-  --ink: #f2f2f2;
-  --muted: #9a9a9a;
-  --line: #2a2a2a;
-  --hero: #000;
 }
 
 @theme inline {

@@ -41,6 +41,12 @@ enum OrderStatus {
   CANCELLED
 }
 
+enum PaymentStatus {
+  UNPAID
+  PAID
+  REFUNDED
+}
+
 enum PaymentMethod {
   CREDIT_CARD
   PURCHASE_ORDER
@@ -199,31 +205,35 @@ model WishlistItem {
 }
 
 model Order {
-  id            String        @id @default(cuid())
+  id              String        @id @default(cuid())
   /// Human-readable, e.g. NX-100240
-  number        String        @unique
-  customerId    String?
-  customer      Customer?     @relation(fields: [customerId], references: [id], onDelete: SetNull)
-  name          String
-  email         String
-  phone         String?
-  addressLine   String
-  city          String
-  state         String
-  postalCode    String
-  country       String
-  paymentMethod PaymentMethod
-  status        OrderStatus   @default(PENDING)
-  couponCode    String?
-  subtotal      Decimal       @db.Decimal(10, 2)
-  discount      Decimal       @default(0) @db.Decimal(10, 2)
-  shippingFee   Decimal       @default(0) @db.Decimal(10, 2)
-  tax           Decimal       @default(0) @db.Decimal(10, 2)
-  total         Decimal       @db.Decimal(10, 2)
-  items         OrderItem[]
-  quote         Quote?
-  createdAt     DateTime      @default(now())
-  updatedAt     DateTime      @updatedAt
+  number          String        @unique
+  customerId      String?
+  customer        Customer?     @relation(fields: [customerId], references: [id], onDelete: SetNull)
+  name            String
+  email           String
+  phone           String?
+  addressLine     String
+  city            String
+  state           String
+  postalCode      String
+  country         String
+  paymentMethod   PaymentMethod
+  paymentStatus   PaymentStatus @default(UNPAID)
+  /// Stripe Checkout session for card payments
+  stripeSessionId String?       @unique
+  status          OrderStatus   @default(PENDING)
+  couponCode      String?
+  subtotal        Decimal       @db.Decimal(10, 2)
+  discount        Decimal       @default(0) @db.Decimal(10, 2)
+  shippingFee     Decimal       @default(0) @db.Decimal(10, 2)
+  tax             Decimal       @default(0) @db.Decimal(10, 2)
+  total           Decimal       @db.Decimal(10, 2)
+  notes           String?
+  items           OrderItem[]
+  quote           Quote?
+  createdAt       DateTime      @default(now())
+  updatedAt       DateTime      @updatedAt
 
   @@index([customerId])
   @@index([status])

@@ -1,12 +1,11 @@
 import Link from "next/link";
-import { CartIcon, ChatIcon, HeartIcon, SearchIcon } from "@/components/icons";
+import { CartButton } from "@/components/cart/cart-button";
+import { ChatIcon, HeartIcon, SearchIcon } from "@/components/icons";
 import { CategoryMenu } from "@/components/layout/category-menu";
 import { mainNav } from "@/lib/site-nav";
 
 // Static header from the prototype: top bar, logo/search/wishlist/cart row, and the sticky red nav.
-// Counts are placeholders until the cart (Phase 7) and wishlist (Phase 8) exist.
-const cartCount = 0;
-const cartTotal = "USD 0.00";
+// The wishlist count is a placeholder until Phase 8.
 const wishlistCount = 0;
 
 const topLink =
@@ -89,22 +88,7 @@ export function SiteHeader() {
             <Badge count={wishlistCount} className="-top-[5px] -right-[5px] h-[18px] min-w-[18px] px-1 text-[10.5px]" />
           </Link>
 
-          <Link
-            href="/cart"
-            aria-label="Cart"
-            className="group/cart flex flex-none items-center gap-3 rounded-10 focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-accent max-md:order-2"
-          >
-            <span className="relative grid size-[42px] place-items-center rounded-10 bg-black text-white transition-colors group-hover/cart:bg-accent">
-              <CartIcon className="size-[21px]" />
-              <Badge count={cartCount} className="-top-[5px] -right-[5px] h-5 min-w-5 px-[5px] text-11" />
-            </span>
-            <span className="max-md:hidden">
-              <b className="block text-14 font-semibold text-header-ink">SHOPPING CART</b>
-              <small className="text-caption text-header-text">
-                {cartCount} items - {cartTotal}
-              </small>
-            </span>
-          </Link>
+          <CartButton />
         </div>
       </header>
 

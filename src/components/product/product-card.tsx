@@ -1,11 +1,12 @@
 import Image from "next/image";
 import Link from "next/link";
+import { AddToCartButton } from "@/components/cart/add-to-cart-button";
 import { CategoryGlyph, GridIcon } from "@/components/icons";
 import { money, stars } from "@/lib/format";
 import type { ProductCardData } from "@/lib/products";
 import { isCategoryIcon } from "@/lib/site-nav";
 
-// Product card (the prototype's .pc). Add to cart (Phase 7) and wishlist (Phase 8) are not wired yet.
+// Product card (the prototype's .pc). The wishlist heart is wired in Phase 8.
 const badges = {
   sale: { label: "Sale", className: "bg-accent" },
   bulk: { label: "Bulk pricing", className: "bg-[#0f766e]" },
@@ -82,12 +83,10 @@ export function ProductCard({ product: p, index = 0 }: { product: ProductCardDat
         <strong className="text-[19px]">{money(p.price)}</strong>
         {p.compareAtPrice && <s className="text-13 text-muted">{money(p.compareAtPrice)}</s>}
       </div>
-      <button
-        type="button"
-        className="mt-auto cursor-pointer rounded-pill bg-ink p-2.5 font-bold text-bg transition hover:bg-accent hover:text-white"
-      >
-        Add to cart
-      </button>
+      <AddToCartButton
+        product={p.cart}
+        className="mt-auto cursor-pointer rounded-pill bg-ink p-2.5 font-bold text-bg transition hover:bg-accent hover:text-white disabled:cursor-not-allowed disabled:opacity-50"
+      />
     </div>
   );
 }

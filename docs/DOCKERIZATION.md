@@ -92,6 +92,7 @@ docker compose build app && docker compose up -d   # after changing the Dockerfi
 - **Don't** run `npm run dev` in WSL: port 3100 belongs to `nexora_app`.
 - **Never** `docker compose down -v`: it deletes `nexora_postgres_data` (the database). Plain `down` is safe.
 - After someone else changes `package.json`/`package-lock.json` (e.g. `git pull`): `docker compose exec app npm ci`.
+- **After a database migration: `docker compose restart app`**, so the dev server loads the regenerated Prisma client.
 - Your WSL `node_modules` is only for the editor (VS Code IntelliSense/ESLint). Refresh it with `npm ci` in WSL if needed.
 
 ## Notes for Phase 5
