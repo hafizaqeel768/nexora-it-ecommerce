@@ -1,7 +1,9 @@
 // Order helpers (server-only, deliberately not server actions so they can't be called from the browser).
 import { randomInt } from "node:crypto";
 import type { Prisma } from "@/generated/prisma/client";
+import { after } from "next/server";
 import { db } from "@/lib/db";
+import { deliverOrderEmail, queueOrderEmail } from "@/lib/order-emails";
 
 type Tx = Prisma.TransactionClient;
 
@@ -37,7 +39,7 @@ export async function cancelUnpaidOrder(orderId: string) {
 
 /**
  * After Stripe redirects back: ask Stripe (never trust the URL) whether this order's session is paid,
- * and mark the order paid. Idempotent.
+ * mark the order paid and send the confirmation email. Idempotent.
  */
 export async function confirmStripePayment(orderId: string, sessionId: string) {
   const order = await db.order.findUnique({ where: { id: orderId }, select: { stripeSessionId: true, paymentStatus: true } });
@@ -45,7 +47,13 @@ export async function confirmStripePayment(orderId: string, sessionId: string) {
   const { getStripe } = await import("@/lib/stripe");
   const session = await getStripe().checkout.sessions.retrieve(sessionId);
   if (session.payment_status === "paid" && session.metadata?.orderId === orderId) {
-    await db.order.update({ where: { id: orderId }, data: { paymentStatus: "PAID" } });
+    const emailId = await db.$transaction(async (tx) => {
+      const res = await tx.order.updateMany({ where: { id: orderId, paymentStatus: "UNPAID" }, data: { paymentStatus: "PAID" } });
+      if (res.count !== 1) return null; // someone else confirmed it first
+      const o = await tx.order.findUniqueOrThrow({ where: { id: orderId }, select: { email: true } });
+      return (await queueOrderEmail(tx, orderId, "CONFIRMATION", "PENDING", o.email)).id;
+    });
+    if (emailId) after(() => deliverOrderEmail(emailId));
   }
 }
 

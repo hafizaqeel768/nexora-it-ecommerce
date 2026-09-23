@@ -90,10 +90,11 @@ Names were checked for exact and substring (`nexora`) matches across containers,
 | Next.js dev server | **3100** | ✅ Verified free. (3000 rejected: bound by stopped `nextjs_frontend`, laravel-ecommerce) |
 | Postgres (host side) | **5432** | ✅ Verified free. No listener, binding or compose declaration (fallback 5433 also verified free) |
 | Prisma Studio | **5555** | ✅ Verified free |
-| Spare: Mailpit web UI | **8025** | ✅ Verified free |
-| Spare: Mailpit SMTP | **1025** | ✅ Verified free |
+| Mailpit web UI | **8025** | ✅ In use since Phase 10 by `nexora_mailpit` (published on 127.0.0.1 only). Re-verified free on 2026-09-23 before use: no Docker container (running or stopped), no WSL listener, no Windows listener (`netstat.exe -ano`) |
+| Mailpit SMTP | **1025** | Not published: the app sends through Mailpit's HTTP API inside `nexora_network`, so 1025 stays free on the host |
 | Compose project name | `nexora` | ✅ Verified unused |
 | Postgres container | `nexora_pg` | ✅ Verified unused |
+| Mail catcher container | `nexora_mailpit` | ✅ Verified unused on 2026-09-23 (no container or volume with "mailpit" in its name); image `axllent/mailpit:v1.31.2` |
 | Docker network | `nexora_net` | ✅ Verified unused |
 | Postgres volume | `nexora_pg_data` | ✅ Verified unused |
 | Database name / user | `nexora` / `nexora` | ✅ New container, no collision possible |

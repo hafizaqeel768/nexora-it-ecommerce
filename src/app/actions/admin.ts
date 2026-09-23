@@ -4,9 +4,12 @@
 // server actions can be called directly).
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
+import { after } from "next/server";
 import { Availability, OrderStatus, Prisma, ProductStatus, QuoteStatus } from "@/generated/prisma/client";
 import { assertAdmin } from "@/lib/admin";
 import { db } from "@/lib/db";
+import { runEmailJobs } from "@/lib/jobs";
+import { deliverOrderEmail, queueOrderEmail } from "@/lib/order-emails";
 import { newOrderNumber, restockOrder } from "@/lib/orders";
 import { deleteUploads, saveUploads } from "@/lib/uploads";
 
@@ -159,15 +162,25 @@ export async function updateOrderStatus(orderId: string, _: AdminFormState, form
     const res = await tx.order.updateMany({ where: { id: orderId, status: order.status }, data: { status: next } });
     if (res.count !== 1) return { error: "The order changed meanwhile; please reload." };
     if (next === "CANCELLED") await restockOrder(tx, orderId);
-    await tx.orderEmail.create({ data: { orderId, orderStatus: next, to: order.email } });
-    return { ok: `Status set to ${next.toLowerCase()}. Status email for ${order.email} recorded.`, paid: order.paymentStatus === "PAID" };
+    const email = await queueOrderEmail(tx, orderId, "STATUS", next, order.email);
+    return { ok: `Status set to ${next.toLowerCase()}. Status email to ${order.email} is on its way.`, paid: order.paymentStatus === "PAID", emailId: email.id };
   });
   if ("error" in result) return { error: result.error };
+  after(() => deliverOrderEmail(result.emailId));
 
   revalidatePath(`/admin/orders/${orderId}`);
   revalidatePath("/admin/orders");
   revalidatePath("/", "layout");
   return { ok: result.ok + (next === "CANCELLED" && result.paid ? " This order was paid: refund it in Stripe/manually." : "") };
+}
+
+/** Sends a queued or failed order email again, now. */
+export async function retryOrderEmail(emailId: string) {
+  await assertAdmin();
+  // An admin retry gets a fresh set of attempts.
+  const row = await db.orderEmail.update({ where: { id: emailId }, data: { attempts: 0 }, select: { orderId: true, sentAt: true } });
+  if (!row.sentAt) await deliverOrderEmail(emailId);
+  revalidatePath(`/admin/orders/${row.orderId}`);
 }
 
 /** Purchase orders and bank transfers are marked paid by hand; card payments only through Stripe. */
@@ -267,6 +280,18 @@ export async function deleteCoupon(id: string) {
   await assertAdmin();
   await db.coupon.deleteMany({ where: { id } }); // orders keep the code as text
   revalidatePath("/admin/coupons");
+}
+
+// ---------- email jobs ----------
+
+export async function runEmailJobsNow(): Promise<AdminFormState> {
+  await assertAdmin();
+  const r = await runEmailJobs();
+  revalidatePath("/admin");
+  if ("skipped" in r) return { error: "The email jobs are already running; try again in a moment." };
+  return {
+    ok: `Order emails: ${r.orderEmails.sent} of ${r.orderEmails.tried} sent. Cart reminders: ${r.cartReminders.sent} of ${r.cartReminders.due} sent.`,
+  };
 }
 
 // ---------- settings ----------

@@ -28,10 +28,19 @@ const nextAuth = NextAuth({
   callbacks: {
     session({ session, token }) {
       if (token.sub) session.user.id = token.sub;
+      // When this login happened; sessions older than a password change are rejected (src/lib/viewer.ts).
+      if (typeof token.iat === "number") session.issuedAt = token.iat;
       return session;
     },
   },
 });
+
+declare module "next-auth" {
+  interface Session {
+    /** JWT issued-at, seconds since epoch */
+    issuedAt?: number;
+  }
+}
 
 export const { auth, signIn, signOut } = nextAuth;
 export const { GET, POST } = nextAuth.handlers;

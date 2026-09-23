@@ -1,9 +1,12 @@
 import Link from "next/link";
+import { RunEmailJobsButton } from "@/components/admin/email-jobs";
 import { OrderTable } from "@/components/admin/order-table";
 import { RevenueChart } from "@/components/admin/revenue-chart";
 import { card, cardTitle, Kpi } from "@/components/admin/ui";
 import { requireAdminPage } from "@/lib/admin";
 import { db } from "@/lib/db";
+import { emailTransport } from "@/lib/email";
+import { MAX_EMAIL_ATTEMPTS } from "@/lib/order-emails";
 import { money } from "@/lib/format";
 import { getStoreRules } from "@/lib/settings";
 
@@ -37,6 +40,11 @@ export default async function AdminDashboard() {
     }),
     db.order.findMany({ orderBy: { createdAt: "desc" }, take: 6 }),
     Promise.resolve({ status: "ACTIVE" as const, stock: { not: null, lte: lowStockAt } }),
+  ]);
+  const [queuedEmails, failedEmails, cartsWaiting] = await Promise.all([
+    db.orderEmail.count({ where: { sentAt: null, attempts: { lt: MAX_EMAIL_ATTEMPTS } } }),
+    db.orderEmail.count({ where: { sentAt: null, attempts: { gte: MAX_EMAIL_ATTEMPTS } } }),
+    db.savedCart.count({ where: { remindedAt: null } }),
   ]);
   const [lowCount, low] = await Promise.all([
     db.product.count({ where: lowWhere }),
@@ -115,6 +123,33 @@ export default async function AdminDashboard() {
           )}
           <p className="mt-2 text-12 text-muted">Alert at {lowStockAt} units or fewer (Settings).</p>
         </div>
+      </div>
+
+      <div className={`${card} max-w-[640px]`}>
+        <h3 className={cardTitle}>Email</h3>
+        <div className={listRow}>
+          <span>Sending through</span>
+          <b className={emailTransport ? "" : "text-[#dc2626]"}>
+            {emailTransport === "resend" ? "Resend" : emailTransport === "mailpit" ? "Mailpit (dev inbox, localhost:8025)" : "Not configured"}
+          </b>
+        </div>
+        <div className={listRow}>
+          <span>Order emails waiting to be (re)sent</span>
+          <b>{queuedEmails}</b>
+        </div>
+        <div className={listRow}>
+          <span>Order emails that gave up after {MAX_EMAIL_ATTEMPTS} tries</span>
+          <b className={failedEmails ? "text-[#dc2626]" : ""}>{failedEmails}</b>
+        </div>
+        <div className={listRow}>
+          <span>Saved carts without a reminder yet</span>
+          <b>{cartsWaiting}</b>
+        </div>
+        <p className="my-2 text-12 text-muted">
+          The jobs retry order emails and send one reminder for carts left alone for {process.env.ABANDONED_CART_HOURS ?? 3} hours (confirmed emails
+          only). They run every {process.env.JOBS_INTERVAL_MINUTES ?? "–"} minutes.
+        </p>
+        <RunEmailJobsButton />
       </div>
     </>
   );

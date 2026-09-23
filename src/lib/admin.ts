@@ -1,12 +1,12 @@
 // Admin access (server-only). Every admin page, server action and export route checks this itself.
-import { notFound, redirect } from "next/navigation";
+import { redirect } from "next/navigation";
 import { getViewer } from "@/lib/viewer";
 
-/** For pages: signed out → login (back to the page afterwards); signed in without the role → 404. */
+/** For pages: signed out → login (back to the page afterwards); signed in without the role → "no access" page. */
 export async function requireAdminPage(path: string) {
   const viewer = await getViewer();
   if (!viewer) redirect(`/login?next=${encodeURIComponent(path)}`);
-  if (viewer.role !== "ADMIN") notFound();
+  if (viewer.role !== "ADMIN") redirect("/no-access");
   return viewer;
 }
 

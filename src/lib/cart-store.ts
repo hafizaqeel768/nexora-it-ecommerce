@@ -15,6 +15,8 @@ type CartState = {
   setQuantity: (key: string, quantity: number) => void;
   remove: (key: string) => void;
   clear: () => void;
+  /** Replaces the lines (restoring a saved cart) without opening the drawer. */
+  restore: (lines: CartLine[]) => void;
   setPromo: (promo: CartState["promo"]) => void;
   openDrawer: () => void;
   closeDrawer: () => void;
@@ -43,6 +45,7 @@ export const useCart = create<CartState>()(
         })),
       remove: (key) => set((s) => ({ lines: s.lines.filter((l) => l.key !== key) })),
       clear: () => set({ lines: [], promo: null }),
+      restore: (lines) => set({ lines }),
       setPromo: (promo) => set({ promo }),
       openDrawer: () => set({ drawerOpen: true }),
       closeDrawer: () => set({ drawerOpen: false }),

@@ -1,10 +1,11 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { AddressForm, ProfileForm } from "@/components/account/account-forms";
+import { VerifyEmailBanner } from "@/components/account/password-forms";
 import { SignInPrompt } from "@/components/account/sign-in-prompt";
 import { db } from "@/lib/db";
 import { StatusBadge } from "@/components/status-badge";
-import { money, shortDate } from "@/lib/format";
+import { money, shortDate, statusLabel } from "@/lib/format";
 import { accountOrdersWhere, getViewer, type Viewer } from "@/lib/viewer";
 
 export const metadata: Metadata = { title: "My Account | Nexora IT" };
@@ -32,6 +33,7 @@ export default async function AccountPage({ searchParams }: Props) {
           <>
             <h1 className="text-[clamp(26px,4vw,36px)] leading-[1.15] font-bold tracking-[-.8px]">My account</h1>
             <p className="section-sub mt-2">Welcome back, {viewer.name}.</p>
+            {!viewer.emailVerifiedAt && <VerifyEmailBanner email={viewer.email} />}
             <nav aria-label="Account" className="mt-[18px] mb-[26px] flex gap-5 border-b border-line">
               {tabs.map((x) => (
                 <Link
@@ -70,7 +72,10 @@ async function OrderList({ viewer }: { viewer: Viewer }) {
   const orders = await db.order.findMany({
     where: accountOrdersWhere(viewer),
     orderBy: { createdAt: "desc" },
-    include: { items: { select: { name: true, quantity: true }, orderBy: { id: "asc" } } },
+    include: {
+      items: { select: { name: true, quantity: true }, orderBy: { id: "asc" } },
+      emails: { where: { sentAt: { not: null } }, orderBy: { sentAt: "desc" }, take: 1, select: { kind: true, orderStatus: true, sentAt: true } },
+    },
   });
 
   if (!orders.length) {
@@ -102,6 +107,12 @@ async function OrderList({ viewer }: { viewer: Viewer }) {
             <b className="ml-auto">{money(o.total)}</b>
           </div>
           <div className="text-ui text-muted">{o.items.map((i) => `${i.name} × ${i.quantity}`).join(", ")}</div>
+          {o.emails[0]?.sentAt && (
+            <div className="mt-1.5 text-12 text-success">
+              ✉️ Email sent: {o.emails[0].kind === "CONFIRMATION" ? "order received" : statusLabel(o.emails[0].orderStatus).toLowerCase()} (
+              {shortDate(o.emails[0].sentAt)})
+            </div>
+          )}
         </Link>
       ))}
     </div>

@@ -1,6 +1,7 @@
 # Nexora IT — development environment. `docker compose up -d` starts everything:
 #   app → nexora_app (Next.js dev server, http://localhost:3100)
 #   db  → nexora_pg  (PostgreSQL 17, 127.0.0.1:5432)
+#   mail → nexora_mailpit (Mailpit inbox for dev email, http://localhost:8025)
 # Service keys (app, db) are scoped to this project; all Docker-level names carry the nexora_ prefix.
 # Names and ports verified free in docs/PHASE-0-ENVIRONMENT.md. Credentials come from .env (git-ignored).
 name: nexora
@@ -17,6 +18,10 @@ services:
     environment:
       # Inside Docker the database is reached by container name, not localhost.
       DATABASE_URL: postgresql://${POSTGRES_USER:?set in .env}:${POSTGRES_PASSWORD:?set in .env}@nexora_pg:5432/${POSTGRES_DB:?set in .env}?schema=public
+      # Dev email goes to Mailpit (src/lib/email.ts); set RESEND_API_KEY in .env to send real email instead.
+      MAILPIT_URL: http://nexora_mailpit:8025
+      # Email jobs (order email retries, abandoned-cart reminders) run inside the server every 15 minutes.
+      JOBS_INTERVAL_MINUTES: 15
     # Regenerates the (git-ignored) Prisma client, then starts the Next.js dev server.
     command: npm run dev:docker
     ports:
@@ -50,6 +55,19 @@ services:
       interval: 5s
       timeout: 5s
       retries: 10
+
+  mail:
+    # Local mail catcher: every email the app sends lands here, nothing reaches real inboxes.
+    # Inbox: http://localhost:8025. The app sends through Mailpit's HTTP API inside nexora_network.
+    image: axllent/mailpit:v1.31.2
+    container_name: nexora_mailpit
+    restart: unless-stopped
+    environment:
+      MP_MAX_MESSAGES: 2000
+    ports:
+      - "127.0.0.1:8025:8025"
+    networks:
+      - nexora_network
 
 networks:
   nexora_network:

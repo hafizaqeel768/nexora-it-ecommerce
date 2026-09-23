@@ -5,6 +5,7 @@ import { createContext, useContext, useState } from "react";
 import { toggleWishlist } from "@/app/actions/account";
 
 type WishlistContext = {
+  signedIn: boolean;
   ids: Set<string>;
   toggle: (productId: string) => void;
 };
@@ -59,7 +60,7 @@ export function WishlistProvider({
     );
   };
 
-  return <Ctx.Provider value={{ ids, toggle }}>{children}</Ctx.Provider>;
+  return <Ctx.Provider value={{ signedIn, ids, toggle }}>{children}</Ctx.Provider>;
 }
 
 export function useWishlist() {

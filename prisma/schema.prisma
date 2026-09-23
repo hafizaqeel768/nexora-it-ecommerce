@@ -183,8 +183,14 @@ model Customer {
   role          Role           @default(CUSTOMER)
   /// scrypt hash (src/lib/password.ts); null = guest, cannot log in
   passwordHash  String?
-  /// When the account was registered; order history starts here (earlier guest orders stay hidden)
+  /// When the account was registered; until the email is verified, order history starts here
   registeredAt  DateTime?
+  /// Set by the verification link; verified accounts also see guest orders placed with their email
+  emailVerifiedAt   DateTime?
+  /// Sessions issued before this are rejected (password reset signs out other devices)
+  passwordChangedAt DateTime?
+  authTokens    AuthToken[]
+  savedCart     SavedCart?
   addressLine   String?
   city          String?
   state         String?
@@ -263,18 +269,26 @@ model OrderItem {
   @@index([orderId])
 }
 
-/// Status notification for an order (the prototype's emailLog). Phase 9 records it; Phase 10 sends it.
+enum OrderEmailKind {
+  CONFIRMATION
+  STATUS
+}
+
+/// Email about an order (the prototype's emailLog): the confirmation, then one per status change.
+/// Rows are queued first and sent right after (src/lib/order-emails.ts); failed ones are retried by the jobs.
 model OrderEmail {
-  id          String      @id @default(cuid())
+  id          String         @id @default(cuid())
   orderId     String
-  order       Order       @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  order       Order          @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  kind        OrderEmailKind @default(STATUS)
   /// The status the email announces
   orderStatus OrderStatus
   to          String
-  /// null = not sent yet (sending arrives in Phase 10)
+  /// null = not sent yet
   sentAt      DateTime?
   error       String?
-  createdAt   DateTime    @default(now())
+  attempts    Int            @default(0)
+  createdAt   DateTime       @default(now())
 
   @@index([orderId])
 }
@@ -322,4 +336,35 @@ model StoreSettings {
   /// Products at or below this stock show as low stock in the admin
   lowStockAt       Int      @default(10)
   updatedAt        DateTime @updatedAt
+}
+
+enum AuthTokenPurpose {
+  VERIFY_EMAIL
+  RESET_PASSWORD
+}
+
+/// One-time link tokens. Only a SHA-256 hash is stored; the token itself is only in the email.
+model AuthToken {
+  id         String           @id @default(cuid())
+  tokenHash  String           @unique
+  purpose    AuthTokenPurpose
+  customerId String
+  customer   Customer         @relation(fields: [customerId], references: [id], onDelete: Cascade)
+  expiresAt  DateTime
+  usedAt     DateTime?
+  createdAt  DateTime         @default(now())
+
+  @@index([customerId, purpose])
+}
+
+/// Server copy of a signed-in customer's cart, for abandoned-cart reminders and restoring on another device.
+model SavedCart {
+  customerId String    @id
+  customer   Customer  @relation(fields: [customerId], references: [id], onDelete: Cascade)
+  /// [{ productId, variantId, quantity }]
+  lines      Json
+  /// When the lines last changed (set by the app; sending a reminder doesn't count as a change)
+  changedAt  DateTime  @default(now())
+  /// Reminder sent for this version of the cart; cleared when the cart changes
+  remindedAt DateTime?
 }

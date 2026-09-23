@@ -13,10 +13,10 @@ This WSL + Docker setup is shared with other projects (e.g. laravel-ecommerce, o
 - Next.js dev server: 3100 (runs in the nexora_app container, not in WSL)
 - Postgres (host): 5432 (fallback 5433, also verified free)
 - Prisma Studio: 5555
-- Spare (e.g. Mailpit): 8025
+- Mailpit web UI (nexora_mailpit, Phase 10): 8025
 
 ## Naming rule
-- Everything Docker-related is prefixed `nexora_` (containers nexora_app + nexora_pg, network nexora_network, volumes nexora_postgres_data / nexora_app_node_modules / nexora_app_next, compose project nexora). nexora_pg_data is the pre-rename backup of the DB volume.
+- Everything Docker-related is prefixed `nexora_` (containers nexora_app + nexora_pg + nexora_mailpit, network nexora_network, volumes nexora_postgres_data / nexora_app_node_modules / nexora_app_next, compose project nexora). nexora_pg_data is the pre-rename backup of the DB volume.
 - Before creating any name, check it doesn't already exist.
 
 ## Scope rule

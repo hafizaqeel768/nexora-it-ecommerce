@@ -81,7 +81,7 @@ Also run: one throwaway `docker run --rm node:20-alpine id node` during inspecti
 ## Daily use
 
 ```bash
-docker compose up -d                    # start app + db
+docker compose up -d                    # start app + db + mail (Mailpit)
 docker compose logs -f app              # Next.js output
 docker compose stop                     # stop both, keep data
 docker compose exec app npm run lint    # any npm/npx command runs inside the container
@@ -93,6 +93,8 @@ docker compose build app && docker compose up -d   # after changing the Dockerfi
 - **Never** `docker compose down -v`: it deletes `nexora_postgres_data` (the database). Plain `down` is safe.
 - After someone else changes `package.json`/`package-lock.json` (e.g. `git pull`): `docker compose exec app npm ci`.
 - **After a database migration: `docker compose restart app`**, so the dev server loads the regenerated Prisma client.
+- **Email (Phase 10):** `nexora_mailpit` catches every email the app sends. Inbox: http://localhost:8025. Nothing reaches real addresses. Restarting it empties the inbox.
+- **QA production build** without touching the dev server: `docker compose exec -e NEXT_DIST_DIR=.next-qa app npm run build`, then `docker compose exec app rm -rf /app/.next-qa` and `git checkout tsconfig.json` (the build adds `.next-qa/types` to it).
 - Your WSL `node_modules` is only for the editor (VS Code IntelliSense/ESLint). Refresh it with `npm ci` in WSL if needed.
 
 ## Notes for Phase 5

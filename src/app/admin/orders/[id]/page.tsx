@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { markOrderPaid, updateOrderStatus } from "@/app/actions/admin";
+import { markOrderPaid, retryOrderEmail, updateOrderStatus } from "@/app/actions/admin";
 import { StatusForm } from "@/components/admin/status-form";
 import { card, cardTitle, row, table, td, textButton, th } from "@/components/admin/ui";
 import { StatusBadge } from "@/components/status-badge";
@@ -179,7 +179,7 @@ export default async function AdminOrder({ params }: Props) {
                 current={order.status}
                 options={Object.values(OrderStatus)}
                 submitLabel="Update status"
-                note="Each change records a status email to the customer. Cancelling puts the items back in stock."
+                note="Each change emails the customer. Cancelling puts the items back in stock."
               />
             )}
           </div>
@@ -187,16 +187,30 @@ export default async function AdminOrder({ params }: Props) {
             <h3 className={cardTitle}>✉️ Email notifications</h3>
             {order.emails.length ? (
               order.emails.map((e) => (
-                <div key={e.id} className="flex justify-between gap-3 border-b border-[#f0f1f3] py-1.5 text-13 text-muted last:border-0">
-                  <span>{shortDate(e.createdAt)}</span>
-                  <span className="text-ink">{statusLabel(e.orderStatus)}</span>
-                  <span>{e.sentAt ? "Sent" : e.error ? "Failed" : "Queued"}</span>
+                <div key={e.id} className="border-b border-[#f0f1f3] py-1.5 text-13 text-muted last:border-0">
+                  <div className="flex items-center justify-between gap-3">
+                    <span>{shortDate(e.createdAt)}</span>
+                    <span className="text-ink">{e.kind === "CONFIRMATION" ? "Order received" : statusLabel(e.orderStatus)}</span>
+                    {e.sentAt ? (
+                      <span className="text-success">Sent</span>
+                    ) : (
+                      <span className="flex items-center gap-2">
+                        <span className={e.error ? "text-[#dc2626]" : ""}>{e.error ? `Failed (${e.attempts}×)` : "Queued"}</span>
+                        <form action={retryOrderEmail.bind(null, e.id)}>
+                          <button type="submit" className={textButton}>
+                            Retry
+                          </button>
+                        </form>
+                      </span>
+                    )}
+                  </div>
+                  {!e.sentAt && e.error && <p className="mt-1 text-12 break-words text-[#dc2626]">{e.error}</p>}
                 </div>
               ))
             ) : (
               <p className="text-13 text-muted">No status emails yet.</p>
             )}
-            <p className="mt-2 text-12 text-muted">Emails are recorded now and actually sent once email is set up (Phase 10).</p>
+            <p className="mt-2 text-12 text-muted">Sent to {order.email}. Failed emails are retried automatically by the email jobs.</p>
           </div>
         </div>
       </div>

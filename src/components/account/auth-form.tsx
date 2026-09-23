@@ -6,7 +6,7 @@ import { login, register, type FormState } from "@/app/actions/account";
 import { Field, FormMessage } from "@/components/account/field";
 
 // Login / register card (the prototype's auth modal #am, as its own page).
-export function AuthForm({ mode, next }: { mode: "login" | "register"; next: string }) {
+export function AuthForm({ mode, next, notice }: { mode: "login" | "register"; next: string; notice?: string }) {
   const isLogin = mode === "login";
   const [state, action, pending] = useActionState<FormState, FormData>(isLogin ? login : register, {});
   const f = state.fields ?? {};
@@ -18,6 +18,7 @@ export function AuthForm({ mode, next }: { mode: "login" | "register"; next: str
       <h1 className="mb-[18px] text-22 font-bold">{isLogin ? "Login to your account" : "Create an account"}</h1>
       <form action={action} className="grid gap-3.5" noValidate>
         <input type="hidden" name="next" value={next} />
+        {notice && !state.error && <FormMessage state={{ ok: notice }} />}
         {!isLogin && <Field label="Full name" name="name" required autoComplete="name" defaultValue={v.name} error={f.name} />}
         <Field label="Email" name="email" type="email" required autoComplete="email" defaultValue={v.email} error={f.email} />
         <Field
@@ -30,6 +31,11 @@ export function AuthForm({ mode, next }: { mode: "login" | "register"; next: str
           error={f.password}
         />
         {!isLogin && !f.password && <p className="-mt-2 text-12 text-muted">At least 8 characters.</p>}
+        {isLogin && (
+          <Link href="/forgot-password" className="-mt-2 justify-self-end text-13 text-muted hover:text-accent">
+            Forgot password?
+          </Link>
+        )}
         <FormMessage state={state} />
         <button type="submit" disabled={pending} className="btn cursor-pointer border-0 text-15 disabled:opacity-60">
           {pending ? "Please wait…" : isLogin ? "Login" : "Create account"}

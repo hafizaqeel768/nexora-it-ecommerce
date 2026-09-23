@@ -1,10 +1,12 @@
 "use server";
 
 import { headers } from "next/headers";
+import { after } from "next/server";
 import { auth } from "@/auth";
 import { PaymentMethod, Prisma } from "@/generated/prisma/client";
 import { db } from "@/lib/db";
 import { cartTotals, lineUnitPrice } from "@/lib/pricing";
+import { deliverOrderEmail, queueOrderEmail } from "@/lib/order-emails";
 import { cancelUnpaidOrder, newOrderNumber } from "@/lib/orders";
 import { getStoreRules } from "@/lib/settings";
 import { getStripe, stripeEnabled } from "@/lib/stripe";
@@ -55,6 +57,7 @@ async function orderCustomerId(tx: Tx, accountId: string | null, contact: Contac
     ? await tx.customer.findFirst({ where: { id: accountId, passwordHash: { not: null } }, select: { id: true, addressLine: true } })
     : null;
   if (account) {
+    await tx.savedCart.deleteMany({ where: { customerId: account.id } }); // the cart became this order
     if (!account.addressLine) {
       await tx.customer.update({
         where: { id: account.id },
@@ -115,7 +118,7 @@ export async function placeOrder(input: CheckoutInput): Promise<CheckoutResult> 
   const accountId = (await auth())?.user?.id ?? null;
   const rules = await getStoreRules();
 
-  let order: { id: string; number: string; total: Prisma.Decimal };
+  let order: { id: string; number: string; total: Prisma.Decimal; emailId: string | null };
   try {
     order = await db.$transaction(async (tx) => {
       const products = await tx.product.findMany({
@@ -162,7 +165,7 @@ export async function placeOrder(input: CheckoutInput): Promise<CheckoutResult> 
 
       const number = await newOrderNumber(tx);
       if (!number) throw new CheckoutError("Could not create the order, please try again.");
-      return tx.order.create({
+      const created = await tx.order.create({
         data: {
           number,
           customerId,
@@ -196,12 +199,19 @@ export async function placeOrder(input: CheckoutInput): Promise<CheckoutResult> 
         },
         select: { id: true, number: true, total: true },
       });
+      // Card orders get their confirmation once Stripe reports the payment (src/lib/orders.ts).
+      const email = method !== PaymentMethod.CREDIT_CARD ? await queueOrderEmail(tx, created.id, "CONFIRMATION", "PENDING", contact.email) : null;
+      return { ...created, emailId: email?.id ?? null };
     });
   } catch (e) {
     if (e instanceof CheckoutError) return { error: e.message };
     throw e;
   }
 
+  if (order.emailId) {
+    const emailId = order.emailId;
+    after(() => deliverOrderEmail(emailId));
+  }
   if (method !== PaymentMethod.CREDIT_CARD) return { redirect: `/order/${order.id}` };
 
   // Card: hand off to Stripe Checkout for the exact server-computed total.
