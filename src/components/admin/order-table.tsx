@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { EmptyRow, row, table, td, th } from "@/components/admin/ui";
 import { StatusBadge } from "@/components/status-badge";
-import { money, shortDate } from "@/lib/format";
+import { money, paymentStatusLabel, shortDate } from "@/lib/format";
 
 export type OrderRow = { id: string; number: string; createdAt: Date; name: string; total: { toString(): string }; status: string; paymentStatus: string };
 
@@ -32,7 +32,7 @@ export function OrderTable({ orders }: { orders: OrderRow[] }) {
               <td className={td}>{o.name}</td>
               <td className={td}>{money(o.total)}</td>
               <td className={`${td} text-13 ${o.paymentStatus === "PAID" ? "text-success" : "text-muted"}`}>
-                {o.paymentStatus === "PAID" ? "Paid" : o.paymentStatus === "REFUNDED" ? "Refunded" : "Unpaid"}
+                {paymentStatusLabel(o.paymentStatus)}
               </td>
               <td className={td}>
                 <StatusBadge status={o.status} />

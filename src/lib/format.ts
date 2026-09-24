@@ -30,3 +30,7 @@ export const STATUS_COLOR: Record<string, string> = {
 
 /** PENDING → Pending */
 export const statusLabel = (s: string) => s.charAt(0) + s.slice(1).toLowerCase();
+
+/** Payment status as shown to people. */
+export const paymentStatusLabel = (s: string) =>
+  ({ PAID: "Paid", UNPAID: "Unpaid", PARTIALLY_REFUNDED: "Partially refunded", REFUNDED: "Refunded" })[s] ?? s;

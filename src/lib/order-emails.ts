@@ -3,27 +3,32 @@
 import type { OrderEmailKind, OrderStatus, Prisma } from "@/generated/prisma/client";
 import { db } from "@/lib/db";
 import { sendMail } from "@/lib/email";
-import { orderConfirmationEmail, orderStatusEmail } from "@/lib/email-templates";
+import { orderConfirmationEmail, orderStatusEmail, refundEmail } from "@/lib/email-templates";
 
 export const MAX_EMAIL_ATTEMPTS = 5;
 
 type Tx = Prisma.TransactionClient;
 
-export async function queueOrderEmail(tx: Tx, orderId: string, kind: OrderEmailKind, orderStatus: OrderStatus, to: string) {
-  return tx.orderEmail.create({ data: { orderId, kind, orderStatus, to }, select: { id: true } });
+export async function queueOrderEmail(tx: Tx, orderId: string, kind: OrderEmailKind, orderStatus: OrderStatus, to: string, refundId?: string) {
+  return tx.orderEmail.create({ data: { orderId, kind, orderStatus, to, refundId: refundId ?? null }, select: { id: true } });
 }
 
 /** Sends one queued email. Claims the row first (attempts + 1) so two workers never send it twice. */
 export async function deliverOrderEmail(id: string): Promise<boolean> {
   const row = await db.orderEmail.findUnique({
     where: { id },
-    include: { order: { include: { items: { orderBy: { id: "asc" }, select: { name: true, quantity: true, lineTotal: true } } } } },
+    include: { refund: true, order: { include: { items: { orderBy: { id: "asc" }, select: { name: true, quantity: true, lineTotal: true } } } } },
   });
   if (!row || row.sentAt || row.attempts >= MAX_EMAIL_ATTEMPTS) return false;
   const claim = await db.orderEmail.updateMany({ where: { id, sentAt: null, attempts: row.attempts }, data: { attempts: { increment: 1 } } });
   if (claim.count !== 1) return false;
 
-  const mail = row.kind === "CONFIRMATION" ? await orderConfirmationEmail(row.order, row.to) : await orderStatusEmail(row.order, row.orderStatus, row.to);
+  const mail =
+    row.kind === "CONFIRMATION"
+      ? await orderConfirmationEmail(row.order, row.to)
+      : row.kind === "REFUND" && row.refund
+        ? await refundEmail(row.order, row.refund, row.to)
+        : await orderStatusEmail(row.order, row.orderStatus, row.to);
   const result = await sendMail(mail);
   await db.orderEmail.update({
     where: { id },

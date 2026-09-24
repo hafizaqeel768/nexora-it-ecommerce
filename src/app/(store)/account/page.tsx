@@ -6,6 +6,7 @@ import { SignInPrompt } from "@/components/account/sign-in-prompt";
 import { db } from "@/lib/db";
 import { StatusBadge } from "@/components/status-badge";
 import { money, shortDate, statusLabel } from "@/lib/format";
+import { trackingInfo } from "@/lib/tracking";
 import { accountOrdersWhere, getViewer, type Viewer } from "@/lib/viewer";
 
 export const metadata: Metadata = { title: "My Account" };
@@ -107,9 +108,14 @@ async function OrderList({ viewer }: { viewer: Viewer }) {
             <b className="ml-auto">{money(o.total)}</b>
           </div>
           <div className="text-ui text-muted">{o.items.map((i) => `${i.name} × ${i.quantity}`).join(", ")}</div>
+          {o.trackingNumber && (
+            <div className="mt-1.5 text-12 text-muted">
+              📦 {trackingInfo(o.trackingCarrier, o.trackingNumber)?.carrier} tracking {o.trackingNumber} (open the order to track it)
+            </div>
+          )}
           {o.emails[0]?.sentAt && (
             <div className="mt-1.5 text-12 text-success">
-              ✉️ Email sent: {o.emails[0].kind === "CONFIRMATION" ? "order received" : statusLabel(o.emails[0].orderStatus).toLowerCase()} (
+              ✉️ Email sent: {o.emails[0].kind === "CONFIRMATION" ? "order received" : o.emails[0].kind === "REFUND" ? "refund" : statusLabel(o.emails[0].orderStatus).toLowerCase()} (
               {shortDate(o.emails[0].sentAt)})
             </div>
           )}

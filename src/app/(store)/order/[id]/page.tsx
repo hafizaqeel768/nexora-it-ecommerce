@@ -5,6 +5,7 @@ import { OrderSummary } from "@/components/cart/order-summary";
 import { ClearCart } from "@/components/checkout/clear-cart";
 import { getConfig } from "@/lib/config";
 import { money } from "@/lib/format";
+import { trackingInfo } from "@/lib/tracking";
 import { confirmStripePayment, getOrder } from "@/lib/orders";
 
 export const metadata: Metadata = { title: "Order confirmed", robots: { index: false } };
@@ -81,7 +82,31 @@ export default async function OrderPage({ params, searchParams }: Props) {
               )}
             </OrderSummary>
           </div>
-          <p className="mt-6">
+          {(() => {
+            const track = trackingInfo(order.trackingCarrier, order.trackingNumber);
+            return (
+              track && (
+                <div className="mt-5 rounded-14 border border-line bg-white p-4 text-left text-14">
+                  <b className="block">📦 On its way</b>
+                  {track.carrier} tracking number <b>{track.number}</b>
+                  {track.url && (
+                    <a href={track.url} target="_blank" rel="noopener noreferrer" className="btn mt-3 flex w-fit text-14">
+                      Track your package
+                    </a>
+                  )}
+                </div>
+              )
+            );
+          })()}
+          {n(order.refundedTotal) > 0 && (
+            <p className="mt-4 text-14 text-muted">
+              {money(order.refundedTotal)} of this order {order.paymentStatus === "REFUNDED" ? "was" : "has been partly"} refunded.
+            </p>
+          )}
+          <p className="mt-6 flex flex-wrap justify-center gap-3">
+            <Link href={`/print/invoice/${order.id}`} target="_blank" className="btn border border-line bg-transparent text-ink hover:border-accent">
+              Invoice
+            </Link>
             <Link href="/shop" className="btn">
               Continue shopping
             </Link>

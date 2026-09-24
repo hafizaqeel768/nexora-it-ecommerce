@@ -24,7 +24,7 @@ export default async function AdminDashboard() {
   since.setDate(since.getDate() - (DAYS - 1));
 
   const [revenue, orderCount, pendingCount, buyers, quoteCount, newQuotes, recentDays, top, recent, lowWhere] = await Promise.all([
-    db.order.aggregate({ where: counted, _sum: { total: true }, _count: true }),
+    db.order.aggregate({ where: counted, _sum: { total: true, refundedTotal: true }, _count: true }),
     db.order.count(),
     db.order.count({ where: { status: "PENDING" } }),
     db.order.groupBy({ by: ["email"] }),
@@ -72,7 +72,11 @@ export default async function AdminDashboard() {
   return (
     <>
       <div className="mb-4 grid grid-cols-4 gap-4 max-[900px]:grid-cols-2">
-        <Kpi label="Revenue" value={money(revenue._sum.total ?? 0)} note={`${revenue._count} orders, excl. cancelled`} />
+        <Kpi
+          label="Revenue"
+          value={money(Number(revenue._sum.total ?? 0) - Number(revenue._sum.refundedTotal ?? 0))}
+          note={`${revenue._count} orders, excl. cancelled and refunds`}
+        />
         <Kpi label="Orders" value={orderCount} note={`${pendingCount} pending`} />
         <Kpi label="Customers" value={buyers.length} note="unique buyers" />
         <Kpi label="Quote requests" value={quoteCount} note={`${newQuotes} new`} />

@@ -13,12 +13,15 @@ export function StatusForm({
   options,
   submitLabel,
   note,
+  children,
 }: {
   action: (state: AdminFormState, form: FormData) => Promise<AdminFormState>;
   current: string;
   options: string[];
   submitLabel: string;
   note?: string;
+  /** Extra fields sent with the status (e.g. tracking for "Shipped") */
+  children?: React.ReactNode;
 }) {
   const [state, formAction, pending] = useActionState(action, {});
   return (
@@ -35,6 +38,7 @@ export function StatusForm({
           {pending ? "Saving…" : submitLabel}
         </button>
       </div>
+      {children}
       {note && <p className="text-12 text-muted">{note}</p>}
       <FormMessage state={state} />
     </form>

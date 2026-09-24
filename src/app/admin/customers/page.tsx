@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { toggleTaxExempt } from "@/app/actions/settings";
 import { SwitchButton } from "@/components/admin/switch-button";
 import { card, EmptyRow, ExportLink, row, table, td, th } from "@/components/admin/ui";
@@ -34,7 +35,11 @@ export default async function AdminCustomers() {
             {customers.length ? (
               customers.map((c) => (
                 <tr key={c.id} className={row}>
-                  <td className={`${td} font-bold`}>{c.name}</td>
+                  <td className={`${td} font-bold`}>
+                    <Link href={`/admin/customers/${c.id}`} className="hover:text-accent">
+                      {c.name}
+                    </Link>
+                  </td>
                   <td className={td}>
                     <a href={`mailto:${c.email}`} className="hover:text-accent">
                       {c.email}
@@ -61,7 +66,7 @@ export default async function AdminCustomers() {
           </tbody>
         </table>
       </div>
-      <p className="mt-3 text-13 text-muted">{customers.length} customers. Spent excludes cancelled orders.</p>
+      <p className="mt-3 text-13 text-muted">{customers.length} customers. Spent excludes cancelled orders and refunds.</p>
     </>
   );
 }

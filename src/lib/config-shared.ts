@@ -32,7 +32,7 @@ export type CheckoutSettings = {
 export type PaymentOption = { enabled: boolean; label: string; instructions: string };
 export type PaymentSettings = { card: PaymentOption; purchaseOrder: PaymentOption; bankTransfer: PaymentOption };
 
-export type EmailTemplateKey = "orderConfirmation" | "orderStatus" | "verifyEmail" | "resetPassword" | "cartReminder";
+export type EmailTemplateKey = "orderConfirmation" | "orderStatus" | "refund" | "verifyEmail" | "resetPassword" | "cartReminder";
 export type EmailTemplate = { subject: string; intro: string };
 export type EmailSettings = {
   senderName: string;
@@ -92,6 +92,7 @@ export const DEFAULT_CONFIG: ConfigSections = {
     templates: {
       orderConfirmation: { subject: "Order {order} received", intro: "Thank you, {name}! We've received your order {order}." },
       orderStatus: { subject: "Order {order}: {status}", intro: "" },
+      refund: { subject: "Refund for order {order}", intro: "Hi {name}, we've refunded {amount} for your order {order}." },
       verifyEmail: { subject: "Confirm your email address", intro: "Welcome, {name}! Please confirm that this is your email address." },
       resetPassword: { subject: "Reset your password", intro: "Hi {name}, someone (hopefully you) asked to reset the password for this account." },
       cartReminder: { subject: "You left something in your cart", intro: "Still thinking it over, {name}? Your cart is saved." },
@@ -108,6 +109,7 @@ export const EMAIL_TEMPLATE_INFO: Record<EmailTemplateKey, { label: string; when
     when: "Sent when you change an order's status. Leave the intro empty to use the built-in text for each status.",
     placeholders: "{name} {order} {status} {store}",
   },
+  refund: { label: "Refund", when: "Sent when you refund an order (full or partial).", placeholders: "{name} {order} {amount} {store}" },
   verifyEmail: { label: "Confirm email", when: "Sent after registering.", placeholders: "{name} {store}" },
   resetPassword: { label: "Reset password", when: "Sent from “Forgot password?”.", placeholders: "{name} {store}" },
   cartReminder: { label: "Abandoned cart", when: "Sent once for a cart left alone (confirmed emails only).", placeholders: "{name} {store}" },

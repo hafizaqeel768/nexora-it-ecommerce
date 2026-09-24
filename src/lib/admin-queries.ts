@@ -48,7 +48,7 @@ export async function customerRows(): Promise<CustomerRow[]> {
   const [customers, byEmail, spentByEmail] = await Promise.all([
     db.customer.findMany({ select: { id: true, name: true, email: true, role: true, passwordHash: true, taxExempt: true } }),
     db.order.groupBy({ by: ["email"], _count: { _all: true }, _max: { createdAt: true } }),
-    db.order.groupBy({ by: ["email"], where: { status: { not: "CANCELLED" } }, _sum: { total: true } }),
+    db.order.groupBy({ by: ["email"], where: { status: { not: "CANCELLED" } }, _sum: { total: true, refundedTotal: true } }),
   ]);
   const stats = new Map<string, { orders: number; spent: number; lastOrder: Date | null }>();
   for (const g of byEmail) {
@@ -60,7 +60,7 @@ export async function customerRows(): Promise<CustomerRow[]> {
   }
   for (const g of spentByEmail) {
     const s = stats.get(g.email.toLowerCase());
-    if (s) s.spent += Number(g._sum.total ?? 0);
+    if (s) s.spent += Number(g._sum.total ?? 0) - Number(g._sum.refundedTotal ?? 0);
   }
   return customers
     .map((c) => {

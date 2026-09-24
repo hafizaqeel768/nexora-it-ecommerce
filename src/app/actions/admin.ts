@@ -9,8 +9,10 @@ import { Availability, OrderStatus, Prisma, ProductStatus, QuoteStatus } from "@
 import { assertAdmin } from "@/lib/admin";
 import { db } from "@/lib/db";
 import { runEmailJobs } from "@/lib/jobs";
+import { logOrderEvent } from "@/lib/order-activity";
 import { deliverOrderEmail, queueOrderEmail } from "@/lib/order-emails";
 import { newOrderNumber, restockOrder } from "@/lib/orders";
+import { isCarrier } from "@/lib/tracking";
 import { deleteUploads, saveUploads } from "@/lib/uploads";
 
 export type AdminFormState = { error?: string; ok?: string; fields?: Record<string, string> };
@@ -149,9 +151,13 @@ export async function toggleProductStatus(id: string) {
 // ---------- orders ----------
 
 export async function updateOrderStatus(orderId: string, _: AdminFormState, form: FormData): Promise<AdminFormState> {
-  await assertAdmin();
+  const admin = await assertAdmin();
   const next = text(form, "status", 20) as OrderStatus;
   if (!(Object.values(OrderStatus) as string[]).includes(next)) return { error: "Unknown status." };
+  // Optional tracking sent along with "Shipped", so the Shipped email can include it.
+  const carrier = text(form, "trackingCarrier", 20);
+  const trackingNumber = text(form, "trackingNumber", 80);
+  if (trackingNumber && !isCarrier(carrier)) return { error: "Choose the carrier for the tracking number." };
 
   const result = await db.$transaction(async (tx) => {
     const order = await tx.order.findUnique({ where: { id: orderId }, select: { status: true, email: true, paymentStatus: true } });
@@ -159,9 +165,16 @@ export async function updateOrderStatus(orderId: string, _: AdminFormState, form
     if (order.status === next) return { error: `The order is already ${next.toLowerCase()}.` };
     if (order.status === "CANCELLED") return { error: "Cancelled orders are final (their stock was released)." };
     // Only move if nobody changed it meanwhile; cancelling releases the reserved stock exactly once.
-    const res = await tx.order.updateMany({ where: { id: orderId, status: order.status }, data: { status: next } });
+    const tracking = next === "SHIPPED" && trackingNumber ? { trackingCarrier: carrier, trackingNumber } : {};
+    const res = await tx.order.updateMany({ where: { id: orderId, status: order.status }, data: { status: next, ...tracking } });
     if (res.count !== 1) return { error: "The order changed meanwhile; please reload." };
     if (next === "CANCELLED") await restockOrder(tx, orderId);
+    await logOrderEvent(
+      tx,
+      orderId,
+      `Status: ${order.status.toLowerCase()} → ${next.toLowerCase()}${next === "CANCELLED" ? " (items put back in stock)" : ""}${trackingNumber && next === "SHIPPED" ? ` · tracking ${carrier.toUpperCase()} ${trackingNumber}` : ""}`,
+      admin.name,
+    );
     const email = await queueOrderEmail(tx, orderId, "STATUS", next, order.email);
     return { ok: `Status set to ${next.toLowerCase()}. Status email to ${order.email} is on its way.`, paid: order.paymentStatus === "PAID", emailId: email.id };
   });
@@ -171,7 +184,7 @@ export async function updateOrderStatus(orderId: string, _: AdminFormState, form
   revalidatePath(`/admin/orders/${orderId}`);
   revalidatePath("/admin/orders");
   revalidatePath("/", "layout");
-  return { ok: result.ok + (next === "CANCELLED" && result.paid ? " This order was paid: refund it in Stripe/manually." : "") };
+  return { ok: result.ok + (next === "CANCELLED" && result.paid ? " This order was paid: use Refund below to pay it back." : "") };
 }
 
 /** Sends a queued or failed order email again, now. */
@@ -185,11 +198,12 @@ export async function retryOrderEmail(emailId: string) {
 
 /** Purchase orders and bank transfers are marked paid by hand; card payments only through Stripe. */
 export async function markOrderPaid(orderId: string) {
-  await assertAdmin();
-  await db.order.updateMany({
+  const admin = await assertAdmin();
+  const res = await db.order.updateMany({
     where: { id: orderId, paymentStatus: "UNPAID", paymentMethod: { not: "CREDIT_CARD" }, status: { not: "CANCELLED" } },
     data: { paymentStatus: "PAID" },
   });
+  if (res.count) await logOrderEvent(db, orderId, "Marked as paid", admin.name);
   revalidatePath(`/admin/orders/${orderId}`);
   revalidatePath("/admin/orders");
 }
@@ -212,7 +226,7 @@ export async function updateQuoteStatus(quoteId: string, _: AdminFormState, form
  * ("Custom quote — Category (qty N)", $0) to be priced with the customer; the quote becomes WON.
  */
 export async function convertQuoteToOrder(quoteId: string) {
-  await assertAdmin();
+  const admin = await assertAdmin();
   const orderId = await db.$transaction(async (tx) => {
     const q = await tx.quote.findUnique({ where: { id: quoteId }, include: { category: { select: { name: true } } } });
     if (!q) return null;
@@ -244,6 +258,7 @@ export async function convertQuoteToOrder(quoteId: string) {
       select: { id: true },
     });
     await tx.quote.update({ where: { id: q.id }, data: { orderId: order.id, status: "WON" } });
+    await logOrderEvent(tx, order.id, `Created from quote ${q.number}; price it with “Edit items”`, admin.name);
     return order.id;
   });
   if (!orderId) return;

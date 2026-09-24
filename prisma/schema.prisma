@@ -44,6 +44,7 @@ enum OrderStatus {
 enum PaymentStatus {
   UNPAID
   PAID
+  PARTIALLY_REFUNDED
   REFUNDED
 }
 
@@ -202,6 +203,8 @@ model Customer {
   passwordChangedAt DateTime?
   /// B2B tax exemption (resale/exempt certificate on file): no tax at checkout when signed in
   taxExempt     Boolean        @default(false)
+  /// Private note for staff (Admin → Customers → customer)
+  adminNote     String?
   authTokens    AuthToken[]
   savedCart     SavedCart?
   addressLine   String?
@@ -263,6 +266,13 @@ model Order {
   items           OrderItem[]
   quote           Quote?
   emails          OrderEmail[]
+  /// Shipment tracking (Phase 13); carriers and their tracking links: src/lib/tracking.ts
+  trackingCarrier String?
+  trackingNumber  String?
+  /// Sum of refunds so far
+  refundedTotal   Decimal       @default(0) @db.Decimal(10, 2)
+  refunds         Refund[]
+  activity        OrderNote[]
   createdAt       DateTime      @default(now())
   updatedAt       DateTime      @updatedAt
 
@@ -291,6 +301,7 @@ model OrderItem {
 enum OrderEmailKind {
   CONFIRMATION
   STATUS
+  REFUND
 }
 
 /// Email about an order (the prototype's emailLog): the confirmation, then one per status change.
@@ -307,6 +318,9 @@ model OrderEmail {
   sentAt      DateTime?
   error       String?
   attempts    Int            @default(0)
+  /// REFUND emails: which refund they announce
+  refundId    String?
+  refund      Refund?        @relation(fields: [refundId], references: [id], onDelete: Cascade)
   createdAt   DateTime       @default(now())
 
   @@index([orderId])
@@ -436,4 +450,49 @@ model SavedCart {
   changedAt  DateTime  @default(now())
   /// Reminder sent for this version of the cart; cleared when the cart changes
   remindedAt DateTime?
+}
+
+enum RefundMethod {
+  /// Refunded to the card through Stripe
+  STRIPE
+  /// Paid back outside the shop (bank transfer, credit note…), recorded here
+  MANUAL
+}
+
+/// Money given back on an order (full or partial).
+model Refund {
+  id             String       @id @default(cuid())
+  orderId        String
+  order          Order        @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  amount         Decimal      @db.Decimal(10, 2)
+  reason         String?
+  method         RefundMethod
+  stripeRefundId String?      @unique
+  /// Items were put back in stock with this refund (order cancelled)
+  restocked      Boolean      @default(false)
+  createdBy      String?
+  emails         OrderEmail[]
+  createdAt      DateTime     @default(now())
+
+  @@index([orderId])
+}
+
+enum OrderNoteKind {
+  /// Written by staff
+  NOTE
+  /// Recorded automatically (status change, edit, refund, tracking)
+  EVENT
+}
+
+/// Staff-only order timeline: internal notes and automatic events. Never shown to customers.
+model OrderNote {
+  id         String        @id @default(cuid())
+  orderId    String
+  order      Order         @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  kind       OrderNoteKind @default(NOTE)
+  body       String
+  authorName String?
+  createdAt  DateTime      @default(now())
+
+  @@index([orderId, createdAt])
 }

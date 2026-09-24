@@ -4,6 +4,7 @@ import { getConfig } from "@/lib/config";
 import { fillTemplate, type EmailTemplateKey, type StoreDetails } from "@/lib/config-shared";
 import { APP_URL, type Mail } from "@/lib/email";
 import { money, statusLabel } from "@/lib/format";
+import { trackingInfo } from "@/lib/tracking";
 
 const esc = (s: string) => s.replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c]!);
 
@@ -43,6 +44,8 @@ type OrderForEmail = {
   paymentMethod: "CREDIT_CARD" | "PURCHASE_ORDER" | "BANK_TRANSFER";
   paymentStatus: string;
   shippingMethod: string | null;
+  trackingCarrier: string | null;
+  trackingNumber: string | null;
   subtotal: { toString(): string };
   discount: { toString(): string };
   shippingFee: { toString(): string };
@@ -100,11 +103,33 @@ export async function orderStatusEmail(o: OrderForEmail, status: string, to: str
   const label = statusLabel(status);
   const p = await prepare("orderStatus", { name: first(o.name), order: o.number, status: label });
   const intro = p.intro || STATUS_TEXT[status] || `Your order status is now ${label}.`;
+  // Shipped: carrier, tracking number and a tracking button when the admin entered them.
+  const track = status === "SHIPPED" ? trackingInfo(o.trackingCarrier, o.trackingNumber) : null;
+  const trackHtml = track
+    ? `<p style="background:#f4f4f5;border-radius:10px;padding:12px 14px">${esc(track.carrier)} tracking number: <b>${esc(track.number)}</b></p>${track.url ? button(track.url, "Track your package") : ""}`
+    : "";
+  const trackText = track ? `\n\n${track.carrier} tracking number: ${track.number}${track.url ? `\nTrack your package: ${track.url}` : ""}` : "";
   return {
     to,
     subject: p.subject,
-    html: layout(p.store, p.subject, `<h1 style="margin:0 0 12px;font-size:22px">Order ${esc(o.number)} · ${esc(label)}</h1>${para(intro)}${itemsTable(o)}${button(link, "View your order")}`),
-    text: `Order ${o.number}: ${label}\n\n${intro}\n\n${itemsText(o)}\n\nView your order: ${link}`,
+    html: layout(p.store, p.subject, `<h1 style="margin:0 0 12px;font-size:22px">Order ${esc(o.number)} · ${esc(label)}</h1>${para(intro)}${trackHtml}${itemsTable(o)}${button(link, "View your order")}`),
+    text: `Order ${o.number}: ${label}\n\n${intro}${trackText}\n\n${itemsText(o)}\n\nView your order: ${link}`,
+  };
+}
+
+export async function refundEmail(o: OrderForEmail, refund: { amount: { toString(): string }; reason: string | null; method: "STRIPE" | "MANUAL" }, to: string): Promise<Mail> {
+  const link = `${APP_URL}/order/${o.id}`;
+  const amount = money(refund.amount);
+  const p = await prepare("refund", { name: first(o.name), order: o.number, amount });
+  const how =
+    refund.method === "STRIPE"
+      ? "The refund goes back to the card you paid with; banks usually show it within 5–10 business days."
+      : "We'll pay the amount back the same way you paid. Reply to this email if you have any questions.";
+  return {
+    to,
+    subject: p.subject,
+    html: layout(p.store, p.subject, `${para(p.intro)}<p style="font-size:22px;font-weight:bold;margin:14px 0">${esc(amount)}</p>${refund.reason ? para(`Reason: ${refund.reason}`) : ""}${para(how)}${button(link, "View your order")}`),
+    text: `${p.intro}\n\nRefunded: ${amount}${refund.reason ? `\nReason: ${refund.reason}` : ""}\n\n${how}\n\nView your order: ${link}`,
   };
 }
 
@@ -148,7 +173,7 @@ export async function abandonedCartEmail(name: string, to: string, lines: { name
 
 /** Admin "Send test email": the chosen template with sample values, to check wording and sender. */
 export async function testEmail(key: EmailTemplateKey, to: string): Promise<Mail> {
-  const sample = { name: "Alex", order: "NX-123456", status: "Shipped" };
+  const sample = { name: "Alex", order: "NX-123456", status: "Shipped", amount: "$49.00" };
   const { store, subject, intro } = await prepare(key, sample);
   const body = key === "orderStatus" && !intro ? STATUS_TEXT.SHIPPED : intro;
   return {
