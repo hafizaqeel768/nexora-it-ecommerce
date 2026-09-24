@@ -4,14 +4,30 @@ import { redirect } from "next/navigation";
 import { ProductCard } from "@/components/product/product-card";
 import { Pagination } from "@/components/shop/pagination";
 import { ShopView } from "@/components/shop/shop-view";
-import { getCategoryName, getShopResults, parseShopParams } from "@/lib/catalog";
+import { getCategoryMeta, getShopResults, parseShopParams } from "@/lib/catalog";
 import { shopHref } from "@/lib/catalog-shared";
+import { getConfig } from "@/lib/config";
+import { metaText } from "@/lib/seo";
 
 type Props = { searchParams: Promise<Record<string, string | string[] | undefined>> };
 
+// One indexable page per category (and its numbered pages); searches, filters and sort orders are "noindex",
+// so search engines don't collect thousands of near-identical listing URLs.
 export async function generateMetadata({ searchParams }: Props): Promise<Metadata> {
-  const { category } = parseShopParams(await searchParams);
-  return { title: `${(await getCategoryName(category)) ?? "Shop"}` };
+  const p = parseShopParams(await searchParams);
+  const [cat, store] = await Promise.all([getCategoryMeta(p.category), getConfig("store")]);
+  const name = cat?.name ?? "Shop";
+  const title = cat?.seoTitle || name;
+  const description = metaText(cat?.seoDescription || cat?.description || `Shop ${cat ? cat.name.toLowerCase() : "business IT hardware"} at ${store.name}: prices, stock, bulk pricing and quotes.`);
+  const filtered = !!(p.q || p.brands.length || p.min != null || p.max != null || p.rating || p.sale || p.sort !== "featured");
+  const canonical = shopHref({ ...p, q: "", brands: [], min: null, max: null, rating: 0, sale: false, sort: "featured", category: cat ? p.category : null });
+  return {
+    title,
+    description,
+    alternates: { canonical },
+    robots: filtered || (p.category && !cat) ? { index: false, follow: true } : undefined,
+    openGraph: { siteName: store.name, type: "website", url: canonical, title, description, images: cat?.image ? [cat.image] : undefined },
+  };
 }
 
 // Catalog listing (the prototype's #/shop). Filters live in the URL; results come from Postgres.

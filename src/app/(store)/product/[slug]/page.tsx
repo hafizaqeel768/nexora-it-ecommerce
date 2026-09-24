@@ -6,11 +6,13 @@ import { ProductCard } from "@/components/product/product-card";
 import { PurchasePanel } from "@/components/product/purchase-panel";
 import { RelatedRow } from "@/components/product/related-row";
 import { Reviews, type ReviewAccess } from "@/components/product/reviews";
-import { getProduct, getRelated } from "@/lib/catalog";
+import { getProduct, getRelated, type ProductDetail } from "@/lib/catalog";
 import { getConfig } from "@/lib/config";
 import { db } from "@/lib/db";
 import { hasBought } from "@/lib/reviews";
+import { imageUrls, jsonLd, metaText } from "@/lib/seo";
 import { categoryHref } from "@/lib/site-nav";
+import { absoluteUrl } from "@/lib/site-url";
 import { getViewer } from "@/lib/viewer";
 
 type Props = { params: Promise<{ slug: string }> };
@@ -18,7 +20,55 @@ type Props = { params: Promise<{ slug: string }> };
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const product = await getProduct((await params).slug);
   if (!product) return { title: "Product not found" };
-  return { title: `${product.name}`, description: product.description?.slice(0, 160) ?? undefined };
+  const store = await getConfig("store");
+  const title = product.seoTitle || product.name;
+  const description = metaText(product.seoDescription || product.description || `${product.name} by ${product.brand}, from ${store.name}.`);
+  const url = `/product/${product.slug}`;
+  return {
+    title,
+    description,
+    alternates: { canonical: url },
+    openGraph: { siteName: store.name, type: "website", url, title, description, images: product.images.slice(0, 4) },
+    twitter: { card: product.images.length ? "summary_large_image" : "summary" },
+  };
+}
+
+const AVAILABILITY = { IN_STOCK: "InStock", OUT_OF_STOCK: "OutOfStock", BACKORDER: "BackOrder" } as const;
+
+/** schema.org Product + breadcrumbs, so search results can show price, stock and stars. */
+function structuredData(product: ProductDetail) {
+  const url = absoluteUrl(`/product/${product.slug}`);
+  const availability = product.stock === 0 ? "OutOfStock" : AVAILABILITY[product.availability];
+  const crumbs = [
+    { name: "Shop", url: absoluteUrl("/shop") },
+    ...(product.parent ? [{ name: product.parent.name, url: absoluteUrl(categoryHref(product.parent.slug)) }] : []),
+    { name: product.category.name, url: absoluteUrl(categoryHref(product.category.slug)) },
+    { name: product.name, url },
+  ];
+  return [
+    {
+      "@context": "https://schema.org",
+      "@type": "Product",
+      name: product.name,
+      url,
+      image: imageUrls(product.images),
+      description: metaText(product.seoDescription || product.description, 5000) || undefined,
+      sku: product.sku ?? undefined,
+      mpn: product.mpn ?? undefined,
+      brand: { "@type": "Brand", name: product.brand },
+      category: product.category.name,
+      itemCondition: `https://schema.org/${product.condition === "NEW" ? "NewCondition" : product.condition === "USED" ? "UsedCondition" : "RefurbishedCondition"}`,
+      offers: { "@type": "Offer", url, price: product.price.toFixed(2), priceCurrency: "USD", availability: `https://schema.org/${availability}` },
+      ...(product.reviews.length && product.rating
+        ? { aggregateRating: { "@type": "AggregateRating", ratingValue: product.rating, reviewCount: product.reviews.length, bestRating: 5, worstRating: 1 } }
+        : {}),
+    },
+    {
+      "@context": "https://schema.org",
+      "@type": "BreadcrumbList",
+      itemListElement: crumbs.map((c, i) => ({ "@type": "ListItem", position: i + 1, name: c.name, item: c.url })),
+    },
+  ];
 }
 
 // Product detail page (the prototype's #/product/:id).
@@ -43,6 +93,7 @@ export default async function ProductPage({ params }: Props) {
 
   return (
     <main className="min-h-[80vh] pt-12 pb-[60px]">
+      <script type="application/ld+json" dangerouslySetInnerHTML={jsonLd(structuredData(product))} />
       <div className="wrap">
         <nav aria-label="Breadcrumb" className="mb-[22px] text-13 text-muted">
           <Link href="/shop" className="text-accent">

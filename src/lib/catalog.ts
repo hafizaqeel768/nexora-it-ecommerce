@@ -121,9 +121,10 @@ export async function getSearchSuggestions(q: string): Promise<{ products: Searc
   };
 }
 
-export async function getCategoryName(slug: string | null) {
+/** A category's name and search-engine texts (shop page metadata). */
+export async function getCategoryMeta(slug: string | null) {
   if (!slug) return null;
-  return (await db.category.findUnique({ where: { slug }, select: { name: true } }))?.name ?? null;
+  return db.category.findUnique({ where: { slug }, select: { name: true, description: true, image: true, seoTitle: true, seoDescription: true } });
 }
 
 // ---------- product detail ----------
@@ -173,6 +174,11 @@ export const getProduct = cache(async (slug: string) => {
     tiers: p.priceTiers.map((t) => ({ minQty: t.minQty, maxQty: t.maxQty, multiplier: Number(t.multiplier) })),
     reviews: p.reviews.map((r) => ({ id: r.id, author: r.authorName, rating: r.rating, title: r.title, body: r.body, verified: r.verifiedBuyer, date: r.createdAt.toISOString() })),
     categoryId: p.categoryId,
+    sku: p.sku,
+    mpn: p.mpn,
+    condition: p.condition,
+    seoTitle: p.seoTitle,
+    seoDescription: p.seoDescription,
   };
 });
 

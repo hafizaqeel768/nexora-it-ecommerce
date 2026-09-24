@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { NO_INDEX } from "@/lib/seo";
 import { redirect } from "next/navigation";
 import { CheckoutView, type CheckoutPayment } from "@/components/checkout/checkout-view";
 import { getConfig } from "@/lib/config";
@@ -7,7 +8,7 @@ import { getShippingZones, getTaxRates } from "@/lib/shipping-data";
 import { stripeEnabled } from "@/lib/stripe";
 import { getViewer } from "@/lib/viewer";
 
-export const metadata: Metadata = { title: "Checkout" };
+export const metadata: Metadata = { title: "Checkout", robots: NO_INDEX };
 
 type Props = { searchParams: Promise<{ canceled?: string }> };
 

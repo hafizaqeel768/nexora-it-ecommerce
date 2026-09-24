@@ -10,6 +10,7 @@ const TABS = [
   { href: "/admin/settings/payments", label: "Payments" },
   { href: "/admin/settings/checkout", label: "Checkout & stock" },
   { href: "/admin/settings/email", label: "Email" },
+  { href: "/admin/settings/seo", label: "SEO" },
 ];
 
 export function SettingsTabs() {

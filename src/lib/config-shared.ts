@@ -53,6 +53,19 @@ export type ReviewSettings = {
   buyersOnly: boolean;
 };
 
+export type SeoSettings = {
+  /** Home page title and description in search results; empty = store name – tagline / footer about text */
+  homeTitle: string;
+  homeDescription: string;
+  /** Image shown when a page is shared (Facebook, LinkedIn, X…) and it has no own image; /uploads/… */
+  shareImage: string | null;
+  /** Off = ask search engines not to index the site (e.g. while testing on the live domain) */
+  allowIndexing: boolean;
+  /** Ownership verification codes (content of the meta tag) */
+  googleVerification: string;
+  bingVerification: string;
+};
+
 export type ConfigSections = {
   store: StoreDetails;
   checkout: CheckoutSettings;
@@ -60,6 +73,7 @@ export type ConfigSections = {
   email: EmailSettings;
   inventory: InventorySettings;
   reviews: ReviewSettings;
+  seo: SeoSettings;
 };
 export type ConfigSection = keyof ConfigSections;
 
@@ -100,6 +114,7 @@ export const DEFAULT_CONFIG: ConfigSections = {
   },
   inventory: { lowStockAt: 10 },
   reviews: { enabled: true, requireApproval: true, buyersOnly: false },
+  seo: { homeTitle: "", homeDescription: "", shareImage: null, allowIndexing: true, googleVerification: "", bingVerification: "" },
 };
 
 export const EMAIL_TEMPLATE_INFO: Record<EmailTemplateKey, { label: string; when: string; placeholders: string }> = {

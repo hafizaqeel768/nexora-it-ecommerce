@@ -74,6 +74,9 @@ model Category {
   /// Listed in the header menu, footer and home tiles (top-level categories only)
   showInMenu  Boolean    @default(true)
   sortOrder   Int        @default(0)
+  /// Search engines (Phase 17): page title and meta description of its shop page; empty = automatic
+  seoTitle       String?
+  seoDescription String?
   parentId    String?
   parent      Category?  @relation("CategoryTree", fields: [parentId], references: [id], onDelete: Restrict)
   children    Category[] @relation("CategoryTree")
@@ -117,6 +120,9 @@ model Product {
   gallery          String[]         @default([])
   /// Cached average of reviews (prototype "r")
   rating           Decimal?         @db.Decimal(2, 1)
+  /// Search engines (Phase 17): page title and meta description; empty = name / description
+  seoTitle         String?
+  seoDescription   String?
   /// Prototype demo product — easy to find and remove
   isSample         Boolean          @default(false)
   sourceUrl        String?

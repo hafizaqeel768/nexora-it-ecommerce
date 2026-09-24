@@ -10,8 +10,7 @@ export type SendResult = { ok: true } | { ok: false; error: string };
 
 const ENV_FROM = process.env.EMAIL_FROM ?? "Nexora IT <orders@nexora.test>";
 
-/** Public site URL for links in emails (jobs run without a request, so this can't come from headers). */
-export const APP_URL = (process.env.APP_URL ?? "http://localhost:3100").replace(/\/$/, "");
+export { APP_URL } from "@/lib/site-url";
 
 function parseFrom(from: string) {
   const m = from.match(/^\s*(.*?)\s*<([^>]+)>\s*$/);

@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { NO_INDEX } from "@/lib/seo";
 import Link from "next/link";
 import { AddressForm, ProfileForm } from "@/components/account/account-forms";
 import { VerifyEmailBanner } from "@/components/account/password-forms";
@@ -9,7 +10,7 @@ import { money, shortDate, statusLabel } from "@/lib/format";
 import { trackingInfo } from "@/lib/tracking";
 import { accountOrdersWhere, getViewer, type Viewer } from "@/lib/viewer";
 
-export const metadata: Metadata = { title: "My Account" };
+export const metadata: Metadata = { title: "My Account", robots: NO_INDEX };
 
 type Props = { searchParams: Promise<{ t?: string }> };
 

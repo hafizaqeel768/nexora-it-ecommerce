@@ -1,9 +1,10 @@
 import type { Metadata } from "next";
+import { NO_INDEX } from "@/lib/seo";
 import { redirect } from "next/navigation";
 import { AuthForm } from "@/components/account/auth-form";
 import { getViewer } from "@/lib/viewer";
 
-export const metadata: Metadata = { title: "Login" };
+export const metadata: Metadata = { title: "Login", robots: NO_INDEX };
 
 type Props = { searchParams: Promise<{ next?: string; reset?: string }> };
 

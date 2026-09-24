@@ -35,6 +35,45 @@ function refresh(path: string) {
   revalidatePath(path);
 }
 
+// ---------- search engines (Phase 17) ----------
+
+/** Accepts the code or the whole <meta … content="code"> tag that Google/Bing show. */
+function verificationCode(value: string) {
+  const code = value.match(/content=["']([^"']+)["']/i)?.[1] ?? value;
+  return code.trim();
+}
+
+export async function saveSeoSettings(_: AdminFormState, form: FormData): Promise<AdminFormState> {
+  await assertAdmin();
+  const current = await getConfig("seo");
+  const v = {
+    homeTitle: text(form, "homeTitle", 120),
+    homeDescription: text(form, "homeDescription", 320),
+    allowIndexing: flag(form, "allowIndexing"),
+    googleVerification: verificationCode(text(form, "googleVerification", 300)),
+    bingVerification: verificationCode(text(form, "bingVerification", 300)),
+  };
+  const fields: Record<string, string> = {};
+  for (const k of ["googleVerification", "bingVerification"] as const) {
+    if (v[k] && !/^[\w-]{6,100}$/.test(v[k])) fields[k] = `The ${k === "googleVerification" ? "Google" : "Bing"} code should be the letters and numbers from the meta tag.`;
+  }
+  if (Object.keys(fields).length) return fail(fields);
+
+  let shareImage = current.shareImage;
+  const file = form.get("shareImage");
+  if (file instanceof File && file.size > 0) {
+    const up = await saveUploads([file]);
+    if ("error" in up) return fail({ shareImage: up.error });
+    shareImage = up.urls[0];
+  } else if (flag(form, "removeShareImage")) {
+    shareImage = null;
+  }
+  await saveConfig("seo", { ...v, shareImage });
+  if (current.shareImage && current.shareImage !== shareImage) await deleteUploads([current.shareImage]);
+  refresh("/admin/settings/seo");
+  return { ok: v.allowIndexing ? "SEO settings saved." : "SEO settings saved. Search engines are now asked not to index the store." };
+}
+
 // ---------- store details ----------
 
 export async function saveStoreDetails(_: AdminFormState, form: FormData): Promise<AdminFormState> {
