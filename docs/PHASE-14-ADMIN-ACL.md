@@ -1,6 +1,6 @@
-# Phase 14: Admin Users, Roles & ACL
+# Phase 14 — Admin Users, Roles & ACL
 
-Date: 2026-09-25. First phase of the new roadmap (see PROJECT-PLAN.md, "Roadmap change").
+Date: 2026-09-25 · New roadmap, phase 1 of 7 (see PROJECT-PLAN.md, "Roadmap change").
 
 ## How it fits the existing app
 
@@ -14,7 +14,7 @@ Staff are still `Customer` rows with `role = ADMIN`, so login, sessions and pass
 
 **The existing account `admin@nexora.com` became a super admin** in the migration, so it keeps full access. Before this phase every admin could do everything.
 
-## Admin screens (sidebar → System)
+## What you can do now (Admin → System)
 
 - **Admin users** (`/admin/users`): list (All / Active / Disabled, role or Super Admin badge, status, last login, created). **Add admin user** asks for name, email, password (at least 10 characters, letters and a number), role, active, and a super admin switch that only super admins see. The **edit page** has details & role, reset password (signs the admin out everywhere), enable/disable, super admin (super admins only), delete, and the account's history.
 - **Roles** (`/admin/roles`): list with permission and member counts. The role editor shows permissions grouped by module with "All/None" per module. Permissions you don't have are shown but locked. It also lists the role's members and history. A role that is in use can't be deleted.
@@ -69,7 +69,7 @@ Each entry is written in the same transaction as the change. Passwords and token
 
 `docker compose exec app npm run admin:promote -- you@example.com` now makes the account a **super admin**. `--revoke` removes staff access, and is refused for the last active super admin. Both are written to the activity log.
 
-## Tests
+## Checks
 
 | Command | What it does | Result |
 |---|---|---|
@@ -81,11 +81,11 @@ Each entry is written in the same transaction as the change. Passwords and token
 
 The dev database was backed up first (`pg_dump`). **After the tests, all counts matched the "before" snapshot:** 12 customers (1 admin, still super admin), 311 products, 25 orders, 10 categories, 2 coupons, 43 reviews, 3 quotes, 5 roles, 0 audit entries, 0 test accounts left.
 
-## Found and fixed during the phase
+### Incident during testing (fixed)
 
 - **Dev server needs a restart after a schema change.** The Prisma client is cached on `globalThis` across hot reloads (src/lib/db.ts), so the running server didn't know the new columns, and logins failed until `docker compose restart app`. It was restarted, and logins work again. Remember this after future migrations.
 
-## Known limitations
+## Not in this phase / not tested live
 
 - **No-JavaScript fallback of bound server actions fails in the dev server** (turbopack) with "Cannot read properties of undefined (reading 'bind')". That covers switches and buttons like *Live* or *Disable account* when JavaScript is off. With JavaScript (normal use) they work. This is not new in Phase 14; the same forms existed before.
 - Not tested by clicking in a browser: layout of the new screens, the permission picker's All/None buttons, and read-only forms. Please click through them.
