@@ -175,38 +175,3 @@ export async function savePriceTiers(productId: string, _: AdminFormState, form:
   revalidatePath("/", "layout"); // "Bulk pricing" badges on cards
   return { ok: tiers.length ? `${tiers.length} bulk tier${tiers.length === 1 ? "" : "s"} saved.` : "Bulk pricing removed." };
 }
-
-// ---------- CSV import ----------
-
-export type ImportState = {
-  error?: string;
-  ok?: string;
-  applied?: boolean;
-  counts?: { create: number; update: number; unchanged: number; error: number };
-  unknown?: string[];
-  rows?: { line: number; action: string; key: string; name: string; errors: string[]; changes: string[] }[];
-};
-
-/** Preview (mode=preview) or write (mode=apply) a product CSV. Rows with errors are never written. */
-export async function importProducts(_: ImportState, form: FormData): Promise<ImportState> {
-  await assertAdmin("products.import");
-  const file = form.get("file");
-  if (!(file instanceof File) || file.size === 0) return { error: "Choose a CSV file." };
-  if (file.size > 2 * 1024 * 1024) return { error: "The file is larger than 2 MB; split it into smaller files." };
-  const { planImport, applyImport } = await import("@/lib/product-import");
-  const plan = await planImport(await file.text());
-  if ("error" in plan) return { error: plan.error };
-
-  const shown = plan.rows.filter((r) => r.action !== "unchanged").slice(0, 200);
-  const summary = { counts: plan.counts, unknown: plan.unknown, rows: shown.map(({ line, action, key, name, errors, changes }) => ({ line, action, key, name, errors, changes })) };
-  if (form.get("mode") !== "apply") return summary;
-
-  const written = await applyImport(plan);
-  revalidatePath("/", "layout");
-  revalidatePath("/admin/products");
-  return {
-    ...summary,
-    applied: true,
-    ok: `Imported: ${plan.counts.create} created, ${plan.counts.update} updated${plan.counts.error ? `, ${plan.counts.error} rows with errors skipped` : ""}. (${written} products written.)`,
-  };
-}

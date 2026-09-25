@@ -65,6 +65,14 @@ const NAV = [
     ),
   },
   {
+    key: "data",
+    href: "/admin/data-transfer/import",
+    label: "Data transfer",
+    title: "Data transfer",
+    also: ["/admin/data-transfer"],
+    icon: <path d="M7 4v13m0 0-3-3m3 3 3-3M17 20V7m0 0-3 3m3-3 3 3" />,
+  },
+  {
     key: "settings",
     href: "/admin/settings",
     label: "Settings",

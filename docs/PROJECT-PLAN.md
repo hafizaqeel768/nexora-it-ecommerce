@@ -30,6 +30,7 @@ nextjs-ecommerce/
 │   ├── PHASE-12-CATALOG.md           ← categories, brands, options, bulk tiers, reviews, CSV import
 │   ├── PHASE-13-ORDERS.md            ← order editing, refunds, tracking, invoices/packing slips, notes, customer page
 │   ├── PHASE-14-ADMIN-ACL.md         ← admin users, roles, permissions, protected super admin, audit log
+│   ├── PHASE-15-IMPORT-EXPORT.md     ← Data Transfer: import/export framework (products, categories, customers, orders export)
 │   └── kijero-products.json          ← real product catalog (299 entries) used by the seed
 ├── media/
 │   ├── products/                     ← real product photos
@@ -147,7 +148,7 @@ coupons are not part of the new plan; they can be added later.
 ### Phase 14 — Admin users, roles & ACL ✅ (docs/PHASE-14-ADMIN-ACL.md)
 - Admin users, custom roles, granular permissions enforced on the server, protected super admin, no privilege escalation, last-super-admin protection, audit log
 
-### Phase 15 — Import / export framework
+### Phase 15 — Import / export framework ✅ (docs/PHASE-15-IMPORT-EXPORT.md)
 - One reusable framework for products, categories, customers (import + export) and orders (export; import only if it can be done safely): sample CSVs, validation, preview, confirm, result with error CSV, filtered streaming exports
 
 ### Phase 16 — Product attributes

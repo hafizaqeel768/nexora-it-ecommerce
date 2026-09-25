@@ -10,7 +10,7 @@ export function AdminTabs({ label, tabs }: { label: string; tabs: { href: string
   return (
     <nav aria-label={label} className="mb-5 flex gap-5 overflow-x-auto border-b border-line [scrollbar-width:none]">
       {tabs.map((t) => {
-        const on = path === t.href;
+        const on = path === t.href.split("?")[0];
         return (
           <Link
             key={t.href}

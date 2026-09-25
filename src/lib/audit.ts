@@ -15,6 +15,8 @@ export const AUDIT_ACTIONS = {
   "role.created": "Role created",
   "role.updated": "Role changed",
   "role.deleted": "Role deleted",
+  "data.imported": "Data imported",
+  "data.exported": "Data exported",
 } as const;
 
 export type AuditAction = keyof typeof AUDIT_ACTIONS;
@@ -22,7 +24,7 @@ export type AuditAction = keyof typeof AUDIT_ACTIONS;
 export type AuditEntry = {
   actor: { id: string | null; email: string };
   action: AuditAction;
-  targetType: "admin_user" | "role";
+  targetType: "admin_user" | "role" | "data_transfer";
   targetId?: string | null;
   targetLabel?: string | null;
   details?: Prisma.InputJsonValue;

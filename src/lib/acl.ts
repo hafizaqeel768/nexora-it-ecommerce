@@ -23,6 +23,8 @@ export const PERMISSION_GROUPS = [
       ["categories.create", "Create categories"],
       ["categories.edit", "Edit categories"],
       ["categories.delete", "Delete categories"],
+      ["categories.import", "Import categories (CSV)"],
+      ["categories.export", "Export categories (CSV)"],
     ],
   },
   {
@@ -57,6 +59,7 @@ export const PERMISSION_GROUPS = [
     permissions: [
       ["customers.view", "View customers"],
       ["customers.edit", "Edit customer details, notes and tax exemption"],
+      ["customers.import", "Import customers (CSV)"],
       ["customers.export", "Export customers (CSV)"],
     ],
   },
@@ -68,6 +71,14 @@ export const PERMISSION_GROUPS = [
       ["coupons.create", "Create coupons"],
       ["coupons.edit", "Switch coupons on and off"],
       ["coupons.delete", "Delete coupons"],
+    ],
+  },
+  {
+    key: "data_transfer",
+    label: "Data transfer",
+    permissions: [
+      ["import.access", "Open Data Transfer → Import (plus each entity's import permission)"],
+      ["export.access", "Open Data Transfer → Export (plus each entity's export permission)"],
     ],
   },
   {

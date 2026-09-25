@@ -547,3 +547,41 @@ model AdminAuditLog {
   @@index([createdAt])
   @@index([targetType, targetId])
 }
+
+enum ImportJobStatus {
+  /// Checked and previewed; waiting for the admin to confirm
+  VALIDATED
+  IMPORTING
+  DONE
+  /// Nothing (or not everything) could be written; see rows
+  FAILED
+  CANCELLED
+}
+
+/// Data Transfer → Import (Phase 15): one uploaded CSV from preview to result. The file's text is kept here
+/// (never on disk) so the confirmed import is exactly the previewed file; it is cleared after 7 days.
+model ImportJob {
+  id             String          @id @default(cuid())
+  /// products | categories | customers (src/lib/data-transfer/registry.ts)
+  entity         String
+  /// add | update | add_update
+  behavior       String
+  /// skip = import the valid rows; stop = import nothing when any row has an error
+  onError        String
+  fileName       String
+  fileSize       Int
+  content        String?
+  status         ImportJobStatus @default(VALIDATED)
+  /// { rows, valid, warnings, errors }
+  totals         Json
+  /// Per row: { line, key, action, level, messages }; validation first, then the import's outcome
+  rows           Json
+  /// { created, updated, skipped, failed } once imported
+  result         Json?
+  createdById    String?
+  createdByEmail String
+  createdAt      DateTime        @default(now())
+  finishedAt     DateTime?
+
+  @@index([createdAt])
+}
