@@ -3,6 +3,7 @@ import { deleteReview, saveReviewSettings, setReviewApproved } from "@/app/actio
 import { ActionForm, ConfirmButton } from "@/components/admin/action-form";
 import { Pager, pageParam } from "@/components/admin/pager";
 import { card, CheckField, FilterChips, SectionTitle, textButton } from "@/components/admin/ui";
+import { can } from "@/lib/acl";
 import { requireAdminPage } from "@/lib/admin";
 import { getConfig } from "@/lib/config";
 import { db } from "@/lib/db";
@@ -17,7 +18,8 @@ type Props = { searchParams: Promise<{ show?: string; page?: string }> };
 // Reviews (Phase 12): approve, hide or delete; the product's rating follows its approved reviews.
 export default async function AdminReviews({ searchParams }: Props) {
   const sp = await searchParams;
-  await requireAdminPage("/admin/reviews");
+  const admin = await requireAdminPage("/admin/reviews", "reviews.view");
+  const canModerate = can(admin, "reviews.moderate");
   const show = sp.show === "approved" || sp.show === "all" ? sp.show : "pending";
   const page = pageParam(sp.page);
   const where = show === "all" ? {} : { approved: show === "approved" };
@@ -65,6 +67,7 @@ export default async function AdminReviews({ searchParams }: Props) {
             </Link>
             {r.title && <b className="mt-2 block">{r.title}</b>}
             <p className="mt-1 text-14 whitespace-pre-line">{r.body}</p>
+            {canModerate && (
             <div className="mt-3 flex flex-wrap gap-5">
               <form action={setReviewApproved.bind(null, r.id, !r.approved)}>
                 <button type="submit" className={textButton}>
@@ -73,6 +76,7 @@ export default async function AdminReviews({ searchParams }: Props) {
               </form>
               <ConfirmButton action={deleteReview.bind(null, r.id)} confirmText="Delete this review permanently?" />
             </div>
+            )}
           </article>
         ))}
       </div>
@@ -80,7 +84,7 @@ export default async function AdminReviews({ searchParams }: Props) {
 
       <div className={card}>
         <SectionTitle>Review settings</SectionTitle>
-        <ActionForm action={saveReviewSettings} submitLabel="Save review settings">
+        <ActionForm action={saveReviewSettings} submitLabel="Save review settings" readOnly={!canModerate}>
           <CheckField name="enabled" label="Customers can write reviews (when logged in)" defaultChecked={settings.enabled} />
           <CheckField name="requireApproval" label="New and edited reviews need approval here first" defaultChecked={settings.requireApproval} />
           <CheckField name="buyersOnly" label="Only customers who bought the product can review it" defaultChecked={settings.buyersOnly} />

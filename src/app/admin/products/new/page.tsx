@@ -5,7 +5,7 @@ import { requireAdminPage } from "@/lib/admin";
 import { categoryGroups } from "@/lib/admin-queries";
 
 export default async function NewProduct() {
-  await requireAdminPage("/admin/products/new");
+  await requireAdminPage("/admin/products/new", "products.create");
   const categories = await categoryGroups();
   return (
     <>

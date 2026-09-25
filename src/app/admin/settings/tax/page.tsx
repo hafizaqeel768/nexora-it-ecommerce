@@ -3,6 +3,7 @@ import { deleteTaxRate, saveTaxRate } from "@/app/actions/settings";
 import { Field } from "@/components/account/field";
 import { ActionForm, ConfirmButton } from "@/components/admin/action-form";
 import { card, CheckField, SectionTitle, select } from "@/components/admin/ui";
+import { can } from "@/lib/acl";
 import { requireAdminPage } from "@/lib/admin";
 import { COUNTRIES, countryName } from "@/lib/countries";
 import { db } from "@/lib/db";
@@ -40,7 +41,8 @@ function RateFields({ r }: { r?: Rate }) {
 
 // Settings → Tax: rates by country/state. Most specific match wins; tax-exempt customers pay none.
 export default async function TaxSettings() {
-  await requireAdminPage("/admin/settings/tax");
+  const admin = await requireAdminPage("/admin/settings/tax", "settings.view");
+  const ro = !can(admin, "settings.edit");
   const [rates, exempt] = await Promise.all([
     db.taxRate.findMany({ orderBy: [{ country: "asc" }, { state: "asc" }] }),
     db.customer.count({ where: { taxExempt: true } }),
@@ -72,11 +74,11 @@ export default async function TaxSettings() {
                 <span className="ml-auto text-13 font-bold text-accent">Edit</span>
               </summary>
               <div className="border-t border-line p-4">
-                <ActionForm action={saveTaxRate} submitLabel="Save rate">
+                <ActionForm readOnly={ro} action={saveTaxRate} submitLabel="Save rate">
                   <RateFields r={{ id: r.id, name: r.name, country: r.country, state: r.state, rate: r.rate.toString(), shipping: r.shipping }} />
                 </ActionForm>
                 <div className="mt-3">
-                  <ConfirmButton action={deleteTaxRate.bind(null, r.id)} confirmText={`Delete the tax rate “${r.name}”?`} />
+                  {!ro && <ConfirmButton action={deleteTaxRate.bind(null, r.id)} confirmText={`Delete the tax rate “${r.name}”?`} />}
                 </div>
               </div>
             </details>
@@ -85,7 +87,7 @@ export default async function TaxSettings() {
       </div>
       <div className={card}>
         <SectionTitle hint="E.g. United States · TX · 8.25 %.">Add a tax rate</SectionTitle>
-        <ActionForm action={saveTaxRate} submitLabel="Add rate" resetOnSuccess>
+        <ActionForm readOnly={ro} action={saveTaxRate} submitLabel="Add rate" resetOnSuccess>
           <RateFields />
         </ActionForm>
       </div>

@@ -29,6 +29,7 @@ nextjs-ecommerce/
 │   ├── PHASE-11-STORE-CONFIGURATION.md ← admin settings: store details, shipping, tax, payments, checkout, email
 │   ├── PHASE-12-CATALOG.md           ← categories, brands, options, bulk tiers, reviews, CSV import
 │   ├── PHASE-13-ORDERS.md            ← order editing, refunds, tracking, invoices/packing slips, notes, customer page
+│   ├── PHASE-14-ADMIN-ACL.md         ← admin users, roles, permissions, protected super admin, audit log
 │   └── kijero-products.json          ← real product catalog (299 entries) used by the seed
 ├── media/
 │   ├── products/                     ← real product photos
@@ -136,17 +137,33 @@ Goal: a non-technical owner can run and configure the store from `/admin`, Magen
 ### Phase 13 — Order & customer operations
 - Edit order lines/prices (e.g. converted quotes), Stripe refunds, invoices/packing slips, tracking numbers in the Shipped email, internal notes, customer detail page
 
-### Phase 14 — Content (CMS)
-- Home page banners/sections, menu, FAQ, info pages (Privacy, Terms, Shipping, Returns), newsletter sign-ups
+### Roadmap change (2026-09-25)
 
-### Phase 15 — Marketing
-- Coupons: fixed amount, free shipping, expiry, minimum order, usage limits, once per customer
+The phases below replace the earlier plan for 14–17 (CMS, marketing, staff & security, launch readiness).
+Work already done from the old list stays: commit `6a2c2e8` "Phase 17 (WIP): SEO foundation" (SEO fields,
+robots.txt, sitemap, JSON-LD). Its Settings → SEO page is not built yet. Content (CMS) and marketing
+coupons are not part of the new plan; they can be added later.
 
-### Phase 16 — Staff & security
-- Staff roles, invite staff from the admin, activity log, login rate limiting, admin 2-step login
+### Phase 14 — Admin users, roles & ACL ✅ (docs/PHASE-14-ADMIN-ACL.md)
+- Admin users, custom roles, granular permissions enforced on the server, protected super admin, no privilege escalation, last-super-admin protection, audit log
 
-### Phase 17 — Launch readiness
-- Sitemap/robots, editable SEO fields, performance, backups, deployment
+### Phase 15 — Import / export framework
+- One reusable framework for products, categories, customers (import + export) and orders (export; import only if it can be done safely): sample CSVs, validation, preview, confirm, result with error CSV, filtered streaming exports
+
+### Phase 16 — Product attributes
+- Configurable attributes (text, number, boolean, select, multi-select, …) with options
+
+### Phase 17 — Attribute sets
+- Attribute sets per product type, product form integration, extensible attribute values (no column per attribute)
+
+### Phase 18 — My Account redesign
+- Dashboard, orders, order details, profile, addresses, security; responsive; strict ownership checks
+
+### Phase 19 — Security & data integrity audit
+
+### Phase 20 — Complete testing & production readiness
+
+### Phase 21 — (to be defined)
 
 ## Working agreement
 

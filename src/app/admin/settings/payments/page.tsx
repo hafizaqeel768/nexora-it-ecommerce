@@ -2,6 +2,7 @@ import { savePayments } from "@/app/actions/settings";
 import { Field, fieldClass } from "@/components/account/field";
 import { ActionForm } from "@/components/admin/action-form";
 import { card, CheckField, SectionTitle } from "@/components/admin/ui";
+import { can } from "@/lib/acl";
 import { requireAdminPage } from "@/lib/admin";
 import { getConfig } from "@/lib/config";
 import { stripeEnabled } from "@/lib/stripe";
@@ -13,7 +14,8 @@ const label = "grid gap-1.5 text-13 text-muted";
 // Settings → Payments: switch methods on/off, their names and customer instructions.
 // The Stripe secret key stays in the server environment (.env), never in the database or this page.
 export default async function PaymentSettingsPage() {
-  await requireAdminPage("/admin/settings/payments");
+  const admin = await requireAdminPage("/admin/settings/payments", "settings.view");
+  const ro = !can(admin, "settings.edit");
   const p = await getConfig("payments");
   const key = process.env.STRIPE_SECRET_KEY ?? "";
   const stripe = stripeEnabled ? (key.startsWith("sk_live_") ? "Live mode" : "Test mode") : "Not set up";
@@ -25,7 +27,7 @@ export default async function PaymentSettingsPage() {
   ] as const;
 
   return (
-    <ActionForm action={savePayments} submitLabel="Save payment settings" className="grid gap-4">
+    <ActionForm readOnly={ro} action={savePayments} submitLabel="Save payment settings" className="grid gap-4">
       {methods.map((m) => (
         <div key={m.key} className={card}>
           <SectionTitle hint={m.hint}>{m.title}</SectionTitle>

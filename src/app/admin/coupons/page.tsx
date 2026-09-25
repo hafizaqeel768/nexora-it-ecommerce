@@ -2,12 +2,13 @@ import { deleteCoupon, toggleCoupon } from "@/app/actions/admin";
 import { DeleteCouponButton, NewCouponForm } from "@/components/admin/coupon-forms";
 import { SwitchButton } from "@/components/admin/switch-button";
 import { card, EmptyRow, row, table, td, th } from "@/components/admin/ui";
+import { can } from "@/lib/acl";
 import { requireAdminPage } from "@/lib/admin";
 import { db } from "@/lib/db";
 
 // Coupons (the prototype's a_coup): add, switch on/off, delete. Codes are checked at the cart and at checkout.
 export default async function AdminCoupons() {
-  await requireAdminPage("/admin/coupons");
+  const admin = await requireAdminPage("/admin/coupons", "coupons.view");
   const [coupons, uses] = await Promise.all([
     db.coupon.findMany({ orderBy: { createdAt: "asc" } }),
     db.order.groupBy({ by: ["couponCode"], where: { couponCode: { not: null } }, _count: { _all: true } }),
@@ -16,9 +17,11 @@ export default async function AdminCoupons() {
 
   return (
     <>
-      <div className={`${card} mb-4`}>
-        <NewCouponForm />
-      </div>
+      {can(admin, "coupons.create") && (
+        <div className={`${card} mb-4`}>
+          <NewCouponForm />
+        </div>
+      )}
       <div className={card}>
         <table className={table}>
           <thead>
@@ -42,10 +45,10 @@ export default async function AdminCoupons() {
                     {usedBy(c.code)} order{usedBy(c.code) === 1 ? "" : "s"}
                   </td>
                   <td className={td}>
-                    <SwitchButton on={c.active} action={toggleCoupon.bind(null, c.id)} label={`${c.code}: ${c.active ? "active, click to disable" : "disabled, click to enable"}`} />
+                    <SwitchButton readOnly={!can(admin, "coupons.edit")} on={c.active} action={toggleCoupon.bind(null, c.id)} label={`${c.code}: ${c.active ? "active, click to disable" : "disabled, click to enable"}`} />
                   </td>
                   <td className={td}>
-                    <DeleteCouponButton code={c.code} action={deleteCoupon.bind(null, c.id)} />
+                    {can(admin, "coupons.delete") && <DeleteCouponButton code={c.code} action={deleteCoupon.bind(null, c.id)} />}
                   </td>
                 </tr>
               ))

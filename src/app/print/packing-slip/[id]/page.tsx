@@ -13,7 +13,7 @@ export const metadata: Metadata = { title: "Packing slip", robots: { index: fals
 // Packing slip for the warehouse (staff only): what goes in the box and where it goes. No prices.
 export default async function PackingSlipPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
-  await requireAdminPage(`/print/packing-slip/${id}`);
+  await requireAdminPage(`/print/packing-slip/${id}`, "orders.view");
   const [order, store] = await Promise.all([db.order.findUnique({ where: { id }, include: { items: { orderBy: { id: "asc" } } } }), getConfig("store")]);
   if (!order) notFound();
   const track = trackingInfo(order.trackingCarrier, order.trackingNumber);

@@ -30,7 +30,8 @@ const label = "grid gap-1.5 text-13 text-muted";
 
 // Add / edit product (the prototype's a_pform). Photos: reorder ("Make main"), remove, and upload new ones;
 // the first photo is the main image. Variants and bulk tiers are not edited here yet.
-export function ProductForm({ values, categories }: { values: ProductFormValues; categories: CategoryGroup[] }) {
+/** `readOnly` (Phase 14): roles with products.view only see the product; saving is also refused on the server. */
+export function ProductForm({ values, categories, readOnly = false }: { values: ProductFormValues; categories: CategoryGroup[]; readOnly?: boolean }) {
   const [state, action, pending] = useActionState<AdminFormState, FormData>(saveProduct, {});
   const f = state.fields ?? {};
   const [images, setImages] = useState(values.images);
@@ -55,6 +56,7 @@ export function ProductForm({ values, categories }: { values: ProductFormValues;
       onSubmit={() => setPreviews([])}
       noValidate
     >
+      <fieldset disabled={readOnly} className="contents">
       <input type="hidden" name="id" value={values.id ?? ""} />
 
       <fieldset className={`${label} col-span-full`}>
@@ -159,11 +161,16 @@ export function ProductForm({ values, categories }: { values: ProductFormValues;
           <Link href="/admin/products" className="text-13 font-bold text-muted hover:text-ink">
             Cancel
           </Link>
-          <button type="submit" disabled={pending} className={primaryButton}>
-            {pending ? "Saving…" : "Save product"}
-          </button>
+          {readOnly ? (
+            <span className="text-12 text-muted">View only: your role can&apos;t change products.</span>
+          ) : (
+            <button type="submit" disabled={pending} className={primaryButton}>
+              {pending ? "Saving…" : "Save product"}
+            </button>
+          )}
         </div>
       </div>
+      </fieldset>
     </form>
   );
 }

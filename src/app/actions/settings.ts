@@ -6,6 +6,7 @@ import { revalidatePath } from "next/cache";
 import type { AdminFormState } from "@/app/actions/admin";
 import { ShippingKind } from "@/generated/prisma/client";
 import { assertAdmin } from "@/lib/admin";
+import { staffEditDenial } from "@/lib/admin-users";
 import { getConfig, saveConfig } from "@/lib/config";
 import { EMAIL_TEMPLATE_INFO, type EmailTemplateKey, type PaymentSettings } from "@/lib/config-shared";
 import { isCountryCode, stateKey } from "@/lib/countries";
@@ -44,7 +45,7 @@ function verificationCode(value: string) {
 }
 
 export async function saveSeoSettings(_: AdminFormState, form: FormData): Promise<AdminFormState> {
-  await assertAdmin();
+  await assertAdmin("settings.edit");
   const current = await getConfig("seo");
   const v = {
     homeTitle: text(form, "homeTitle", 120),
@@ -77,7 +78,7 @@ export async function saveSeoSettings(_: AdminFormState, form: FormData): Promis
 // ---------- store details ----------
 
 export async function saveStoreDetails(_: AdminFormState, form: FormData): Promise<AdminFormState> {
-  await assertAdmin();
+  await assertAdmin("settings.edit");
   const current = await getConfig("store");
   const v = {
     name: text(form, "name", 80),
@@ -118,7 +119,7 @@ export async function saveStoreDetails(_: AdminFormState, form: FormData): Promi
 // ---------- checkout & stock ----------
 
 export async function saveCheckoutSettings(_: AdminFormState, form: FormData): Promise<AdminFormState> {
-  await assertAdmin();
+  await assertAdmin("settings.edit");
   const minOrder = amount(text(form, "minOrder", 20));
   const lowStockAt = Number(text(form, "lowStockAt", 10));
   const defaultCountry = text(form, "defaultCountry", 2).toUpperCase();
@@ -142,7 +143,7 @@ export async function saveCheckoutSettings(_: AdminFormState, form: FormData): P
 // ---------- payments ----------
 
 export async function savePayments(_: AdminFormState, form: FormData): Promise<AdminFormState> {
-  await assertAdmin();
+  await assertAdmin("settings.edit");
   const keys = ["card", "purchaseOrder", "bankTransfer"] as const;
   const next = Object.fromEntries(
     keys.map((k) => [k, { enabled: flag(form, `${k}.enabled`), label: text(form, `${k}.label`, 60), instructions: text(form, `${k}.instructions`, 1500) }]),
@@ -159,7 +160,7 @@ export async function savePayments(_: AdminFormState, form: FormData): Promise<A
 // ---------- email ----------
 
 export async function saveEmailSettings(_: AdminFormState, form: FormData): Promise<AdminFormState> {
-  await assertAdmin();
+  await assertAdmin("settings.edit");
   const senderEmail = text(form, "senderEmail", 200);
   const replyTo = text(form, "replyTo", 200);
   const fields: Record<string, string> = {};
@@ -179,7 +180,7 @@ export async function saveEmailSettings(_: AdminFormState, form: FormData): Prom
 }
 
 export async function sendTestEmail(_: AdminFormState, form: FormData): Promise<AdminFormState> {
-  const admin = await assertAdmin();
+  const admin = await assertAdmin("settings.edit");
   const key = text(form, "template", 40) as EmailTemplateKey;
   if (!(key in EMAIL_TEMPLATE_INFO)) return { error: "Choose an email." };
   const res = await sendMail(await testEmail(key, admin.email));
@@ -189,7 +190,7 @@ export async function sendTestEmail(_: AdminFormState, form: FormData): Promise<
 // ---------- shipping ----------
 
 export async function saveShippingZone(_: AdminFormState, form: FormData): Promise<AdminFormState> {
-  await assertAdmin();
+  await assertAdmin("settings.edit");
   const id = text(form, "id", 40) || null;
   const name = text(form, "name", 80);
   const countries = [...new Set(form.getAll("countries").map((c) => String(c).toUpperCase()))].filter(isCountryCode);
@@ -215,13 +216,13 @@ export async function saveShippingZone(_: AdminFormState, form: FormData): Promi
 }
 
 export async function deleteShippingZone(id: string) {
-  await assertAdmin();
+  await assertAdmin("settings.edit");
   await db.shippingZone.deleteMany({ where: { id } }); // its methods go with it
   refresh("/admin/settings/shipping");
 }
 
 export async function saveShippingMethod(_: AdminFormState, form: FormData): Promise<AdminFormState> {
-  await assertAdmin();
+  await assertAdmin("settings.edit");
   const id = text(form, "id", 40) || null;
   const zoneId = text(form, "zoneId", 40);
   const name = text(form, "name", 80);
@@ -246,7 +247,7 @@ export async function saveShippingMethod(_: AdminFormState, form: FormData): Pro
 }
 
 export async function deleteShippingMethod(id: string) {
-  await assertAdmin();
+  await assertAdmin("settings.edit");
   await db.shippingMethod.deleteMany({ where: { id } });
   refresh("/admin/settings/shipping");
 }
@@ -254,7 +255,7 @@ export async function deleteShippingMethod(id: string) {
 // ---------- tax ----------
 
 export async function saveTaxRate(_: AdminFormState, form: FormData): Promise<AdminFormState> {
-  await assertAdmin();
+  await assertAdmin("settings.edit");
   const id = text(form, "id", 40) || null;
   const name = text(form, "name", 80);
   const country = text(form, "country", 2).toUpperCase() || "*";
@@ -275,13 +276,14 @@ export async function saveTaxRate(_: AdminFormState, form: FormData): Promise<Ad
 }
 
 export async function deleteTaxRate(id: string) {
-  await assertAdmin();
+  await assertAdmin("settings.edit");
   await db.taxRate.deleteMany({ where: { id } });
   refresh("/admin/settings/tax");
 }
 
 export async function toggleTaxExempt(customerId: string) {
-  await assertAdmin();
+  const admin = await assertAdmin("customers.edit");
+  if (await staffEditDenial(admin, customerId)) return;
   const c = await db.customer.findUnique({ where: { id: customerId }, select: { taxExempt: true } });
   if (!c) return;
   await db.customer.update({ where: { id: customerId }, data: { taxExempt: !c.taxExempt } });

@@ -5,8 +5,9 @@ import { usePathname } from "next/navigation";
 
 // Sidebar links with the prototype's icons (A_NAV).
 const NAV = [
-  { href: "/admin", label: "Dashboard", title: "Dashboard", icon: <path d="M3 3h8v8H3zM13 3h8v5h-8zM13 10h8v11h-8zM3 13h8v8H3z" /> },
+  { key: "dashboard", href: "/admin", label: "Dashboard", title: "Dashboard", icon: <path d="M3 3h8v8H3zM13 3h8v5h-8zM13 10h8v11h-8zM3 13h8v8H3z" /> },
   {
+    key: "catalog",
     href: "/admin/products",
     label: "Products",
     title: "Catalog",
@@ -19,6 +20,7 @@ const NAV = [
     ),
   },
   {
+    key: "orders",
     href: "/admin/orders",
     label: "Orders",
     title: "Orders",
@@ -30,14 +32,16 @@ const NAV = [
       </>
     ),
   },
-  { href: "/admin/quotes", label: "Quotes", title: "Quote requests", icon: <path d="M4 5h16v11H8l-4 4z" /> },
+  { key: "quotes", href: "/admin/quotes", label: "Quotes", title: "Quote requests", icon: <path d="M4 5h16v11H8l-4 4z" /> },
   {
+    key: "reviews",
     href: "/admin/reviews",
     label: "Reviews",
     title: "Reviews",
     icon: <path d="m12 3 2.7 5.6 6.1.9-4.4 4.3 1 6.1L12 17l-5.4 2.9 1-6.1L3.2 9.5l6.1-.9z" />,
   },
   {
+    key: "customers",
     href: "/admin/customers",
     label: "Customers",
     title: "Customers",
@@ -49,6 +53,7 @@ const NAV = [
     ),
   },
   {
+    key: "coupons",
     href: "/admin/coupons",
     label: "Coupons",
     title: "Coupons",
@@ -60,6 +65,7 @@ const NAV = [
     ),
   },
   {
+    key: "settings",
     href: "/admin/settings",
     label: "Settings",
     title: "Settings",
@@ -70,23 +76,37 @@ const NAV = [
       </>
     ),
   },
+  {
+    key: "system",
+    href: "/admin/users",
+    label: "System",
+    title: "System",
+    also: ["/admin/roles", "/admin/audit"],
+    icon: (
+      <>
+        <path d="M12 3 4 6v6c0 4.5 3.4 8.3 8 9 4.6-.7 8-4.5 8-9V6z" />
+        <path d="m9 12 2 2 4-4" />
+      </>
+    ),
+  },
 ];
 
-type NavItem = { href: string; label: string; title: string; icon: React.ReactNode; also?: string[] };
+type NavItem = { key: string; href: string; label: string; title: string; icon: React.ReactNode; also?: string[] };
 
 const current = (pathname: string) =>
   (NAV as NavItem[]).find((n) =>
     n.href === "/admin" ? pathname === "/admin" : [n.href, ...(n.also ?? [])].some((h) => pathname.startsWith(h)),
   ) ?? NAV[0];
 
-export function AdminNav() {
+/** `links`: section key → where it opens, only for sections the admin may see (src/lib/admin-sections.ts). */
+export function AdminNav({ links }: { links: Record<string, string> }) {
   const active = current(usePathname());
   return (
     <nav aria-label="Admin" className="grid gap-1 max-[900px]:order-3 max-[900px]:flex-[1_1_100%] max-[900px]:grid-flow-col max-[900px]:overflow-x-auto">
-      {NAV.map((n) => (
+      {NAV.filter((n) => links[n.key]).map((n) => (
         <Link
-          key={n.href}
-          href={n.href}
+          key={n.key}
+          href={links[n.key]}
           aria-current={n === active ? "page" : undefined}
           className={`flex items-center gap-3 rounded-10 px-3 py-[11px] text-14 font-semibold whitespace-nowrap transition duration-150 ${
             n === active ? "bg-accent text-white" : "text-[#c9ccd3] hover:bg-[#ffffff12] hover:text-white"

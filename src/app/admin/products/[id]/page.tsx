@@ -4,6 +4,7 @@ import { savePriceTiers, saveProductOptions } from "@/app/actions/catalog";
 import { OptionsEditor, TiersEditor } from "@/components/admin/product-extras";
 import { ProductForm } from "@/components/admin/product-form";
 import { card, SectionTitle } from "@/components/admin/ui";
+import { can } from "@/lib/acl";
 import { requireAdminPage } from "@/lib/admin";
 import { categoryGroups } from "@/lib/admin-queries";
 import { db } from "@/lib/db";
@@ -13,7 +14,8 @@ type Props = { params: Promise<{ id: string }>; searchParams: Promise<{ created?
 export default async function EditProduct({ params, searchParams }: Props) {
   const { id } = await params;
   const { created } = await searchParams;
-  await requireAdminPage(`/admin/products/${id}`);
+  const admin = await requireAdminPage(`/admin/products/${id}`, "products.view");
+  const ro = !can(admin, "products.edit");
   const [p, categories, sold] = await Promise.all([
     db.product.findUnique({ where: { id }, include: { variants: { orderBy: { sortOrder: "asc" } }, priceTiers: { orderBy: { minQty: "asc" } } } }),
     categoryGroups(),
@@ -41,6 +43,7 @@ export default async function EditProduct({ params, searchParams }: Props) {
       </p>
       <div className={`${card} max-w-[860px]`}>
         <ProductForm
+          readOnly={ro}
           categories={categories}
           values={{
             id: p.id,
@@ -64,6 +67,7 @@ export default async function EditProduct({ params, searchParams }: Props) {
       <div className={`${card} mt-4 max-w-[860px]`}>
         <SectionTitle hint="E.g. memory or warranty choices. Each option can change the price.">Options</SectionTitle>
         <OptionsEditor
+          readOnly={ro}
           action={saveProductOptions.bind(null, p.id)}
           basePrice={Number(p.price)}
           attribute={p.variants[0]?.attribute ?? ""}
@@ -74,6 +78,7 @@ export default async function EditProduct({ params, searchParams }: Props) {
       <div className={`${card} mt-4 max-w-[860px]`}>
         <SectionTitle hint="Lower unit prices for larger quantities (shown on the product page as “Bulk pricing”).">Bulk pricing</SectionTitle>
         <TiersEditor
+          readOnly={ro}
           action={savePriceTiers.bind(null, p.id)}
           basePrice={Number(p.price)}
           tiers={p.priceTiers.map((t) => ({

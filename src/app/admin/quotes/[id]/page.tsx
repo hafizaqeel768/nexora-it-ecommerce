@@ -5,6 +5,7 @@ import { StatusForm } from "@/components/admin/status-form";
 import { card, cardTitle } from "@/components/admin/ui";
 import { StatusBadge } from "@/components/status-badge";
 import { QuoteStatus } from "@/generated/prisma/client";
+import { can } from "@/lib/acl";
 import { requireAdminPage } from "@/lib/admin";
 import { db } from "@/lib/db";
 import { shortDate } from "@/lib/format";
@@ -16,7 +17,8 @@ const small = "block text-12 text-muted";
 // Quote detail (the prototype's a_qmodal): contact, request, message, status, convert to order.
 export default async function AdminQuote({ params }: Props) {
   const { id } = await params;
-  await requireAdminPage(`/admin/quotes/${id}`);
+  const admin = await requireAdminPage(`/admin/quotes/${id}`, "quotes.view");
+  const canEdit = can(admin, "quotes.edit");
   const q = await db.quote.findUnique({
     where: { id },
     include: { category: { select: { name: true } }, order: { select: { id: true, number: true } } },
@@ -81,6 +83,8 @@ export default async function AdminQuote({ params }: Props) {
                 </Link>
                 .
               </p>
+            ) : !(canEdit && can(admin, "orders.edit")) ? (
+              <p className="text-14 text-muted">Not converted to an order yet.</p>
             ) : (
               <form action={convertQuoteToOrder.bind(null, q.id)} className="grid gap-2">
                 <button type="submit" className="btn cursor-pointer justify-self-start border-0 bg-ink text-14">
@@ -94,7 +98,13 @@ export default async function AdminQuote({ params }: Props) {
           </div>
           <div className={card}>
             <h3 className={cardTitle}>Status</h3>
-            <StatusForm action={updateQuoteStatus.bind(null, q.id)} current={q.status} options={Object.values(QuoteStatus)} submitLabel="Update" />
+            {canEdit ? (
+              <StatusForm action={updateQuoteStatus.bind(null, q.id)} current={q.status} options={Object.values(QuoteStatus)} submitLabel="Update" />
+            ) : (
+              <p className="text-14">
+                <StatusBadge status={q.status} />
+              </p>
+            )}
           </div>
         </div>
       </div>

@@ -6,6 +6,7 @@ import { Pager, pageParam } from "@/components/admin/pager";
 import { SwitchButton } from "@/components/admin/switch-button";
 import { card, EmptyRow, ExportLink, row, select, table, td, th } from "@/components/admin/ui";
 import { fieldClass } from "@/components/account/field";
+import { can } from "@/lib/acl";
 import { requireAdminPage } from "@/lib/admin";
 import { productListWhere } from "@/lib/admin-queries";
 import { db } from "@/lib/db";
@@ -19,7 +20,7 @@ type Props = { searchParams: Promise<{ q?: string; cat?: string; status?: string
 // Products (the prototype's a_prod): search, category and status filters, live switch, edit, CSV export.
 export default async function AdminProducts({ searchParams }: Props) {
   const sp = await searchParams;
-  await requireAdminPage("/admin/products");
+  const admin = await requireAdminPage("/admin/products", "products.view");
   const q = (sp.q ?? "").trim().slice(0, 100);
   const cat = sp.cat ?? "";
   const status = sp.status ?? "";
@@ -64,10 +65,12 @@ export default async function AdminProducts({ searchParams }: Props) {
           Filter
         </button>
         <span className="ml-auto flex items-center gap-4">
-          <ExportLink href={`/admin/export/products${exportQs ? `?${exportQs}` : ""}`} />
-          <Link href="/admin/products/new" className="btn text-14">
-            + Add product
-          </Link>
+          {can(admin, "products.export") && <ExportLink href={`/admin/export/products${exportQs ? `?${exportQs}` : ""}`} />}
+          {can(admin, "products.create") && (
+            <Link href="/admin/products/new" className="btn text-14">
+              + Add product
+            </Link>
+          )}
         </span>
       </form>
 
@@ -116,6 +119,7 @@ export default async function AdminProducts({ searchParams }: Props) {
                   </td>
                   <td className={td}>
                     <SwitchButton
+                      readOnly={!can(admin, "products.edit")}
                       on={p.status === "ACTIVE"}
                       action={toggleProductStatus.bind(null, p.id)}
                       label={`${p.name}: ${p.status === "ACTIVE" ? "live, click to hide" : "draft, click to publish"}`}

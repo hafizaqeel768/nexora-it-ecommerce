@@ -29,7 +29,7 @@ function refresh(orderId: string) {
 // ---------- notes ----------
 
 export async function addOrderNote(orderId: string, _: AdminFormState, form: FormData): Promise<AdminFormState> {
-  const admin = await assertAdmin();
+  const admin = await assertAdmin("orders.edit");
   const body = text(form, "body", 2000);
   if (!body) return { error: "Write a note first.", fields: { body: "Write a note first." } };
   await db.orderNote.create({ data: { orderId, kind: "NOTE", body, authorName: admin.name } });
@@ -40,7 +40,7 @@ export async function addOrderNote(orderId: string, _: AdminFormState, form: For
 // ---------- tracking ----------
 
 export async function saveTracking(orderId: string, _: AdminFormState, form: FormData): Promise<AdminFormState> {
-  const admin = await assertAdmin();
+  const admin = await assertAdmin("orders.edit");
   const carrier = text(form, "trackingCarrier", 20);
   const number = text(form, "trackingNumber", 80);
   if (number && !isCarrier(carrier)) return { error: "Choose the carrier." };
@@ -64,7 +64,7 @@ export async function saveTracking(orderId: string, _: AdminFormState, form: For
  * back by hand. Optionally cancels the order and puts the items back in stock, and emails the customer.
  */
 export async function refundOrder(orderId: string, _: AdminFormState, form: FormData): Promise<AdminFormState> {
-  const admin = await assertAdmin();
+  const admin = await assertAdmin("orders.refund");
   const order = await db.order.findUnique({
     where: { id: orderId },
     select: { number: true, email: true, status: true, paymentStatus: true, paymentMethod: true, stripeSessionId: true, total: true, refundedTotal: true },
@@ -149,7 +149,7 @@ export type EditPayload = { lines: EditLine[]; shippingFee: number; discount: nu
  * quote). Card orders can't be edited (Stripe charged the original amount). Stock follows the quantity changes.
  */
 export async function editOrderItems(orderId: string, _: AdminFormState, form: FormData): Promise<AdminFormState> {
-  const admin = await assertAdmin();
+  const admin = await assertAdmin("orders.edit");
   let p: EditPayload;
   try {
     p = JSON.parse(String(form.get("payload") ?? ""));
@@ -232,7 +232,7 @@ export async function editOrderItems(orderId: string, _: AdminFormState, form: F
 
 /** Contact details and shipping address, until the order has shipped. */
 export async function updateOrderAddress(orderId: string, _: AdminFormState, form: FormData): Promise<AdminFormState> {
-  const admin = await assertAdmin();
+  const admin = await assertAdmin("orders.edit");
   const order = await db.order.findUnique({ where: { id: orderId }, select: { status: true } });
   if (!order) return { error: "Order not found." };
   if (!["PENDING", "PROCESSING"].includes(order.status)) return { error: "The address can only be changed before the order ships." };
@@ -262,7 +262,7 @@ export async function updateOrderAddress(orderId: string, _: AdminFormState, for
 
 /** Product search for "Edit items" → "Add product". */
 export async function searchProductsForOrder(q: string) {
-  await assertAdmin();
+  await assertAdmin("orders.edit");
   const words = String(q ?? "").trim().split(/\s+/).filter(Boolean).slice(0, 5);
   if (!words.length) return [];
   const rows = await db.product.findMany({

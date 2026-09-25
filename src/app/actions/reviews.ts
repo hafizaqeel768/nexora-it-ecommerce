@@ -52,13 +52,13 @@ export async function submitReview(productId: string, _: FormState, form: FormDa
 // ---------- admin ----------
 
 export async function setReviewApproved(reviewId: string, approved: boolean) {
-  await assertAdmin();
+  await assertAdmin("reviews.moderate");
   const r = await db.review.update({ where: { id: reviewId }, data: { approved }, select: { productId: true } });
   await refreshProduct(r.productId);
 }
 
 export async function deleteReview(reviewId: string) {
-  await assertAdmin();
+  await assertAdmin("reviews.moderate");
   const r = await db.review.findUnique({ where: { id: reviewId }, select: { productId: true } });
   if (!r) return;
   await db.review.delete({ where: { id: reviewId } });
@@ -66,7 +66,7 @@ export async function deleteReview(reviewId: string) {
 }
 
 export async function saveReviewSettings(_: AdminFormState, form: FormData): Promise<AdminFormState> {
-  await assertAdmin();
+  await assertAdmin("reviews.moderate");
   const on = (k: string) => form.get(k) === "on";
   await saveConfig("reviews", { enabled: on("enabled"), requireApproval: on("requireApproval"), buyersOnly: on("buyersOnly") });
   revalidatePath("/", "layout");

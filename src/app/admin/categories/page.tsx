@@ -6,6 +6,7 @@ import { ActionForm, ConfirmButton } from "@/components/admin/action-form";
 import { CatalogTabs } from "@/components/admin/catalog-tabs";
 import { card, CheckField, SectionTitle, select } from "@/components/admin/ui";
 import { CategoryGlyph, GridIcon } from "@/components/icons";
+import { can } from "@/lib/acl";
 import { requireAdminPage } from "@/lib/admin";
 import { HOME_CATEGORY_TILES } from "@/lib/categories";
 import { db } from "@/lib/db";
@@ -85,7 +86,7 @@ function Thumb({ c }: { c: Cat }) {
 
 // Categories (Phase 12): two levels, image or icon, menu visibility, order. Products are assigned on the product form.
 export default async function AdminCategories() {
-  await requireAdminPage("/admin/categories");
+  const admin = await requireAdminPage("/admin/categories", "categories.view");
   const [all, counts] = await Promise.all([
     db.category.findMany({ orderBy: [{ sortOrder: "asc" }, { name: "asc" }] }),
     db.product.groupBy({ by: ["categoryId"], _count: { _all: true } }),
@@ -113,7 +114,7 @@ export default async function AdminCategories() {
           <span className="ml-auto text-13 font-bold text-accent">Edit</span>
         </summary>
         <div className="border-t border-line p-4">
-          <ActionForm action={saveCategory} submitLabel="Save category">
+          <ActionForm action={saveCategory} submitLabel="Save category" readOnly={!can(admin, "categories.edit")}>
             <CategoryFields c={c} tops={tops} />
           </ActionForm>
           <div className="mt-3 flex flex-wrap gap-4 text-13">
@@ -123,7 +124,7 @@ export default async function AdminCategories() {
             {own || kids.length ? (
               <span className="text-muted">To delete it, move its {own ? `${own} products` : ""}{own && kids.length ? " and " : ""}{kids.length ? "subcategories" : ""} first.</span>
             ) : (
-              <ConfirmButton action={deleteCategory.bind(null, c.id)} confirmText={`Delete the category “${c.name}”?`} />
+              can(admin, "categories.delete") && <ConfirmButton action={deleteCategory.bind(null, c.id)} confirmText={`Delete the category “${c.name}”?`} />
             )}
           </div>
         </div>
@@ -142,12 +143,14 @@ export default async function AdminCategories() {
         <div className="grid gap-2">
           {tops.map((t) => [row(t, false), ...all.filter((c) => c.parentId === t.id).map((c) => row(c, true))])}
         </div>
-        <div className={card}>
-          <SectionTitle>Add a category</SectionTitle>
-          <ActionForm action={saveCategory} submitLabel="Add category" resetOnSuccess>
-            <CategoryFields tops={tops} />
-          </ActionForm>
-        </div>
+        {can(admin, "categories.create") && (
+          <div className={card}>
+            <SectionTitle>Add a category</SectionTitle>
+            <ActionForm action={saveCategory} submitLabel="Add category" resetOnSuccess>
+              <CategoryFields tops={tops} />
+            </ActionForm>
+          </div>
+        )}
       </div>
     </>
   );

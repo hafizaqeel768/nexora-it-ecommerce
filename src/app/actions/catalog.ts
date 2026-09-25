@@ -34,8 +34,8 @@ function refreshCatalog() {
 // ---------- categories ----------
 
 export async function saveCategory(_: AdminFormState, form: FormData): Promise<AdminFormState> {
-  await assertAdmin();
   const id = text(form, "id", 40) || null;
+  await assertAdmin(id ? "categories.edit" : "categories.create");
   const existing = id ? await db.category.findUnique({ where: { id }, include: { _count: { select: { children: true } } } }) : null;
   if (id && !existing) return { error: "This category no longer exists." };
 
@@ -79,7 +79,7 @@ export async function saveCategory(_: AdminFormState, form: FormData): Promise<A
 
 /** Only empty categories can be deleted (move products and subcategories first). */
 export async function deleteCategory(id: string) {
-  await assertAdmin();
+  await assertAdmin("categories.delete");
   const c = await db.category.findUnique({ where: { id }, include: { _count: { select: { products: true, children: true, quotes: true } } } });
   if (!c || c._count.products || c._count.children) return;
   await db.category.delete({ where: { id } }); // quotes keep their text; the link is set to null
@@ -91,7 +91,7 @@ export async function deleteCategory(id: string) {
 
 /** Renames a brand on every product. Renaming to an existing brand merges the two. */
 export async function renameBrand(_: AdminFormState, form: FormData): Promise<AdminFormState> {
-  await assertAdmin();
+  await assertAdmin("products.edit");
   const from = text(form, "from", 80);
   const to = text(form, "to", 80).replace(/\s+/g, " ");
   if (!to) return fail({ to: "Enter the new brand name." });
@@ -110,7 +110,7 @@ export async function renameBrand(_: AdminFormState, form: FormData): Promise<Ad
  * their id (carts and past orders stay linked); options removed from the list are deleted.
  */
 export async function saveProductOptions(productId: string, _: AdminFormState, form: FormData): Promise<AdminFormState> {
-  await assertAdmin();
+  await assertAdmin("products.edit");
   const product = await db.product.findUnique({ where: { id: productId }, select: { slug: true, variants: { select: { id: true } } } });
   if (!product) return { error: "This product no longer exists." };
   const attribute = text(form, "attribute", 60);
@@ -145,7 +145,7 @@ export async function saveProductOptions(productId: string, _: AdminFormState, f
 
 /** Bulk pricing: from N units, X % off. Tiers must go up without overlapping; the last may be open-ended. */
 export async function savePriceTiers(productId: string, _: AdminFormState, form: FormData): Promise<AdminFormState> {
-  await assertAdmin();
+  await assertAdmin("products.edit");
   const product = await db.product.findUnique({ where: { id: productId }, select: { slug: true } });
   if (!product) return { error: "This product no longer exists." };
   const mins = form.getAll("t.min").map((v) => String(v).trim());
@@ -189,7 +189,7 @@ export type ImportState = {
 
 /** Preview (mode=preview) or write (mode=apply) a product CSV. Rows with errors are never written. */
 export async function importProducts(_: ImportState, form: FormData): Promise<ImportState> {
-  await assertAdmin();
+  await assertAdmin("products.import");
   const file = form.get("file");
   if (!(file instanceof File) || file.size === 0) return { error: "Choose a CSV file." };
   if (file.size > 2 * 1024 * 1024) return { error: "The file is larger than 2 MB; split it into smaller files." };

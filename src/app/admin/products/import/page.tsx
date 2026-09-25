@@ -7,7 +7,7 @@ import { MAX_IMPORT_ROWS } from "@/lib/product-import";
 export const metadata = { title: "Import products" };
 
 export default async function ImportProducts() {
-  await requireAdminPage("/admin/products/import");
+  await requireAdminPage("/admin/products/import", "products.import");
   return (
     <>
       <CatalogTabs />

@@ -3,6 +3,7 @@ import { renameBrand } from "@/app/actions/catalog";
 import { Field } from "@/components/account/field";
 import { ActionForm } from "@/components/admin/action-form";
 import { CatalogTabs } from "@/components/admin/catalog-tabs";
+import { can } from "@/lib/acl";
 import { requireAdminPage } from "@/lib/admin";
 import { db } from "@/lib/db";
 
@@ -10,7 +11,7 @@ export const metadata = { title: "Brands" };
 
 // Brands (Phase 12): every brand used by products, with rename / merge (e.g. "Ubiquiti Networks" → "Ubiquiti").
 export default async function AdminBrands() {
-  await requireAdminPage("/admin/brands");
+  const admin = await requireAdminPage("/admin/brands", "products.view");
   const brands = await db.product.groupBy({
     by: ["brand"],
     _count: { _all: true },
@@ -41,7 +42,7 @@ export default async function AdminBrands() {
                 <span className="ml-auto text-13 font-bold text-accent">Rename / merge</span>
               </summary>
               <div className="border-t border-line p-4">
-                <ActionForm action={renameBrand} submitLabel="Rename" className="grid max-w-[420px] gap-3">
+                <ActionForm action={renameBrand} submitLabel="Rename" readOnly={!can(admin, "products.edit")} className="grid max-w-[420px] gap-3">
                   <input type="hidden" name="from" value={b.brand} />
                   <Field label="New name (an existing brand merges)" name="to" defaultValue={b.brand} list="brand-names" />
                 </ActionForm>

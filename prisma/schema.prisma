@@ -28,6 +28,8 @@ enum Availability {
   BACKORDER
 }
 
+/// ADMIN = staff account (can open /admin). What a staff account may do comes from isSuperAdmin or its
+/// AdminRole (Phase 14 ACL, src/lib/acl.ts); an ADMIN with neither has no permissions.
 enum Role {
   CUSTOMER
   ADMIN
@@ -211,6 +213,15 @@ model Customer {
   taxExempt     Boolean        @default(false)
   /// Private note for staff (Admin → Customers → customer)
   adminNote     String?
+  /// Protected system authority (Phase 14): every permission, and the only accounts that can manage other
+  /// super admins. Not a role: granted by another super admin or `npm run admin:promote`. Only for role ADMIN.
+  isSuperAdmin    Boolean    @default(false)
+  /// Staff permissions (role ADMIN only)
+  adminRoleId     String?
+  adminRole       AdminRole? @relation(fields: [adminRoleId], references: [id], onDelete: Restrict)
+  /// Staff account switched off: can't log in, existing sessions end
+  adminDisabledAt DateTime?
+  lastLoginAt     DateTime?
   authTokens    AuthToken[]
   savedCart     SavedCart?
   addressLine   String?
@@ -224,6 +235,9 @@ model Customer {
   quotes        Quote[]
   createdAt     DateTime       @default(now())
   updatedAt     DateTime       @updatedAt
+
+  @@index([role])
+  @@index([adminRoleId])
 }
 
 model WishlistItem {
@@ -501,4 +515,35 @@ model OrderNote {
   createdAt  DateTime      @default(now())
 
   @@index([orderId, createdAt])
+}
+
+/// Staff role (Phase 14): a named set of permission codes from src/lib/acl.ts. Super admin is not a role.
+model AdminRole {
+  id          String     @id @default(cuid())
+  name        String     @unique
+  description String?
+  /// Permission codes, e.g. "products.edit"; unknown codes are ignored
+  permissions String[]   @default([])
+  members     Customer[]
+  createdAt   DateTime   @default(now())
+  updatedAt   DateTime   @updatedAt
+}
+
+/// Security log (Phase 14): who changed staff accounts, roles and permissions. Actor and target are copied
+/// as text so entries survive the accounts being deleted. Never holds passwords or tokens.
+model AdminAuditLog {
+  id          String   @id @default(cuid())
+  actorId     String?
+  actorEmail  String
+  /// e.g. admin_user.created, role.updated (src/lib/audit.ts)
+  action      String
+  targetType  String
+  targetId    String?
+  targetLabel String?
+  /// What changed, e.g. { role: { from, to } } or { added: [...], removed: [...] }
+  details     Json?
+  createdAt   DateTime @default(now())
+
+  @@index([createdAt])
+  @@index([targetType, targetId])
 }

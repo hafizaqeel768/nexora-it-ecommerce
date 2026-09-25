@@ -3,6 +3,7 @@ import { Field } from "@/components/account/field";
 import { ActionForm, ConfirmButton } from "@/components/admin/action-form";
 import { CountryPicker } from "@/components/admin/country-picker";
 import { card, CheckField, SectionTitle, select } from "@/components/admin/ui";
+import { can } from "@/lib/acl";
 import { requireAdminPage } from "@/lib/admin";
 import { countryName } from "@/lib/countries";
 import { db } from "@/lib/db";
@@ -40,7 +41,8 @@ function MethodFields({ zoneId, m }: { zoneId: string; m?: Method }) {
 
 // Settings → Shipping: zones (where) and their methods (how much). The first matching zone wins.
 export default async function ShippingSettings() {
-  await requireAdminPage("/admin/settings/shipping");
+  const admin = await requireAdminPage("/admin/settings/shipping", "settings.view");
+  const ro = !can(admin, "settings.edit");
   const zones = await db.shippingZone.findMany({
     orderBy: [{ sortOrder: "asc" }, { createdAt: "asc" }],
     include: { methods: { orderBy: [{ sortOrder: "asc" }, { name: "asc" }] } },
@@ -63,7 +65,7 @@ export default async function ShippingSettings() {
               <h3 className="text-18 font-bold">{z.name}</h3>
               <span className="text-13 text-muted">{where}</span>
               <span className="ml-auto">
-                <ConfirmButton action={deleteShippingZone.bind(null, z.id)} confirmText={`Delete the zone “${z.name}” and its shipping methods?`} label="Delete zone" />
+                {!ro && <ConfirmButton action={deleteShippingZone.bind(null, z.id)} confirmText={`Delete the zone “${z.name}” and its shipping methods?`} label="Delete zone" />}
               </span>
             </div>
 
@@ -83,7 +85,7 @@ export default async function ShippingSettings() {
                     <span className="ml-auto text-13 font-bold text-accent">Edit</span>
                   </summary>
                   <div className="border-t border-line p-4">
-                    <ActionForm action={saveShippingMethod} submitLabel="Save method">
+                    <ActionForm readOnly={ro} action={saveShippingMethod} submitLabel="Save method">
                       <MethodFields
                         zoneId={z.id}
                         m={{
@@ -99,7 +101,7 @@ export default async function ShippingSettings() {
                       />
                     </ActionForm>
                     <div className="mt-3">
-                      <ConfirmButton action={deleteShippingMethod.bind(null, m.id)} confirmText={`Delete “${m.name}”?`} label="Delete method" />
+                      {!ro && <ConfirmButton action={deleteShippingMethod.bind(null, m.id)} confirmText={`Delete “${m.name}”?`} label="Delete method" />}
                     </div>
                   </div>
                 </details>
@@ -109,7 +111,7 @@ export default async function ShippingSettings() {
             <details className="mt-3">
               <summary className="cursor-pointer text-13 font-bold text-accent">+ Add a shipping method</summary>
               <div className="mt-3">
-                <ActionForm action={saveShippingMethod} submitLabel="Add method" resetOnSuccess>
+                <ActionForm readOnly={ro} action={saveShippingMethod} submitLabel="Add method" resetOnSuccess>
                   <MethodFields zoneId={z.id} />
                 </ActionForm>
               </div>
@@ -118,7 +120,7 @@ export default async function ShippingSettings() {
             <details className="mt-3">
               <summary className="cursor-pointer text-13 font-bold text-muted">Edit zone (name, countries, states)</summary>
               <div className="mt-3">
-                <ActionForm action={saveShippingZone} submitLabel="Save zone">
+                <ActionForm readOnly={ro} action={saveShippingZone} submitLabel="Save zone">
                   <ZoneFields zone={z} />
                 </ActionForm>
               </div>
@@ -129,7 +131,7 @@ export default async function ShippingSettings() {
 
       <div className={card}>
         <SectionTitle hint="E.g. “Texas” (United States + state TX) for local rates, or “Canada” for international shipping.">Add a shipping zone</SectionTitle>
-        <ActionForm action={saveShippingZone} submitLabel="Add zone" resetOnSuccess>
+        <ActionForm readOnly={ro} action={saveShippingZone} submitLabel="Add zone" resetOnSuccess>
           <ZoneFields />
         </ActionForm>
       </div>

@@ -2,20 +2,23 @@ import Link from "next/link";
 import { toggleTaxExempt } from "@/app/actions/settings";
 import { SwitchButton } from "@/components/admin/switch-button";
 import { card, EmptyRow, ExportLink, row, table, td, th } from "@/components/admin/ui";
+import { can } from "@/lib/acl";
 import { requireAdminPage } from "@/lib/admin";
 import { customerRows } from "@/lib/admin-queries";
 import { money, shortDate } from "@/lib/format";
 
 // Customers (the prototype's a_cust): everyone who ordered or registered, by total spent.
 export default async function AdminCustomers() {
-  await requireAdminPage("/admin/customers");
+  const admin = await requireAdminPage("/admin/customers", "customers.view");
   const customers = await customerRows();
 
   return (
     <>
-      <div className="mb-4 flex justify-end">
-        <ExportLink href="/admin/export/customers" />
-      </div>
+      {can(admin, "customers.export") && (
+        <div className="mb-4 flex justify-end">
+          <ExportLink href="/admin/export/customers" />
+        </div>
+      )}
       <div className={card}>
         <table className={table}>
           <thead>
@@ -53,7 +56,7 @@ export default async function AdminCustomers() {
                   <td className={`${td} whitespace-nowrap`}>{c.lastOrder ? shortDate(c.lastOrder) : "—"}</td>
                   <td className={td}>
                     {c.registered ? (
-                      <SwitchButton on={c.taxExempt} action={toggleTaxExempt.bind(null, c.id)} label={`${c.name}: ${c.taxExempt ? "tax-exempt" : "pays tax"}`} />
+                      <SwitchButton readOnly={!can(admin, "customers.edit")} on={c.taxExempt} action={toggleTaxExempt.bind(null, c.id)} label={`${c.name}: ${c.taxExempt ? "tax-exempt" : "pays tax"}`} />
                     ) : (
                       <span className="text-12 text-muted" title="Only registered accounts can be tax-exempt">—</span>
                     )}

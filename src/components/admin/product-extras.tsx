@@ -16,7 +16,7 @@ let seq = 0;
 const newKey = () => `new-${++seq}`;
 
 // Product options (one group, like the prototype): name + price change per option.
-export function OptionsEditor({ action, attribute, options, basePrice }: { action: Action; attribute: string; options: Omit<Option, "key">[]; basePrice: number }) {
+export function OptionsEditor({ action, attribute, options, basePrice, readOnly = false }: { action: Action; attribute: string; options: Omit<Option, "key">[]; basePrice: number; readOnly?: boolean }) {
   const [rows, setRows] = useState<Option[]>(options.map((o) => ({ ...o, key: o.id })));
   // After a save the page sends the stored options (new ones now have ids): show exactly those.
   const serverKey = JSON.stringify(options);
@@ -27,7 +27,7 @@ export function OptionsEditor({ action, attribute, options, basePrice }: { actio
   }
   const set = (key: string, patch: Partial<Option>) => setRows((r) => r.map((x) => (x.key === key ? { ...x, ...patch } : x)));
   return (
-    <ActionForm action={action} submitLabel="Save options">
+    <ActionForm action={action} submitLabel="Save options" readOnly={readOnly}>
       <label className="grid max-w-[360px] gap-1.5 text-13 text-muted">
         <span>Option group name (shown above the choices)</span>
         <input name="attribute" defaultValue={attribute} placeholder="Memory / Storage" className={cell} />
@@ -68,7 +68,7 @@ export function OptionsEditor({ action, attribute, options, basePrice }: { actio
 type Tier = { key: string; min: string; max: string; pct: string };
 
 // Bulk pricing tiers: from N units, X % off.
-export function TiersEditor({ action, tiers, basePrice }: { action: Action; tiers: Omit<Tier, "key">[]; basePrice: number }) {
+export function TiersEditor({ action, tiers, basePrice, readOnly = false }: { action: Action; tiers: Omit<Tier, "key">[]; basePrice: number; readOnly?: boolean }) {
   const [rows, setRows] = useState<Tier[]>(tiers.map((t) => ({ ...t, key: newKey() })));
   const serverKey = JSON.stringify(tiers);
   const [synced, setSynced] = useState(serverKey);
@@ -78,7 +78,7 @@ export function TiersEditor({ action, tiers, basePrice }: { action: Action; tier
   }
   const set = (key: string, patch: Partial<Tier>) => setRows((r) => r.map((x) => (x.key === key ? { ...x, ...patch } : x)));
   return (
-    <ActionForm action={action} submitLabel="Save bulk pricing">
+    <ActionForm action={action} submitLabel="Save bulk pricing" readOnly={readOnly}>
       <div className="grid gap-2">
         {rows.length > 0 && (
           <div className="grid grid-cols-[1fr_1fr_1fr_1fr_auto] gap-2 text-12 text-muted max-sm:hidden">

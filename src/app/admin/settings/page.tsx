@@ -3,6 +3,7 @@ import { Field, fieldClass } from "@/components/account/field";
 import { ActionForm } from "@/components/admin/action-form";
 import { card, CheckField, SectionTitle } from "@/components/admin/ui";
 import { StoreLogo } from "@/components/store-logo";
+import { can } from "@/lib/acl";
 import { requireAdminPage } from "@/lib/admin";
 import { getConfig } from "@/lib/config";
 
@@ -13,10 +14,11 @@ const two = "grid grid-cols-2 gap-3.5 max-sm:grid-cols-1";
 
 // Settings → Store details: name, logo, contact details, footer and announcement bar.
 export default async function StoreDetailsSettings() {
-  await requireAdminPage("/admin/settings");
+  const admin = await requireAdminPage("/admin/settings", "settings.view");
+  const ro = !can(admin, "settings.edit");
   const s = await getConfig("store");
   return (
-    <ActionForm action={saveStoreDetails} submitLabel="Save store details" className="grid gap-4">
+    <ActionForm readOnly={ro} action={saveStoreDetails} submitLabel="Save store details" className="grid gap-4">
       <div className={card}>
         <SectionTitle hint="Used in page titles, emails and the footer.">Store</SectionTitle>
         <div className="grid gap-3.5">

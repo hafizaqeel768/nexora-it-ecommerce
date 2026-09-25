@@ -7,18 +7,22 @@ import { primaryButton } from "@/components/admin/ui";
 
 // Admin settings form. Submits with onSubmit (not a form action), so what you typed stays in the form when
 // the server rejects it; `resetOnSuccess` empties "add new" forms after a successful save.
+// `readOnly`: the admin's role may look but not change (Phase 14); fields are disabled and there is no button.
+// The server action checks the permission itself either way.
 export function ActionForm({
   action,
   children,
   submitLabel = "Save",
   className = "grid gap-3.5",
   resetOnSuccess = false,
+  readOnly = false,
 }: {
   action: (state: AdminFormState, form: FormData) => Promise<AdminFormState>;
   children: React.ReactNode;
   submitLabel?: string;
   className?: string;
   resetOnSuccess?: boolean;
+  readOnly?: boolean;
 }) {
   const [state, setState] = useState<AdminFormState>({});
   const [pending, startTransition] = useTransition();
@@ -32,6 +36,7 @@ export function ActionForm({
       noValidate
       onSubmit={(e) => {
         e.preventDefault();
+        if (readOnly) return;
         const data = new FormData(e.currentTarget);
         startTransition(async () => {
           const next = await action(state, data);
@@ -42,13 +47,23 @@ export function ActionForm({
         });
       }}
     >
-      <Fragment key={round}>{children}</Fragment>
+      {readOnly ? (
+        <fieldset disabled className="contents">
+          {children}
+        </fieldset>
+      ) : (
+        <Fragment key={round}>{children}</Fragment>
+      )}
       <FormMessage state={state} />
-      <div>
-        <button type="submit" disabled={pending} className={primaryButton}>
-          {pending ? "Saving…" : submitLabel}
-        </button>
-      </div>
+      {readOnly ? (
+        <p className="text-12 text-muted">View only: your role can&apos;t change this.</p>
+      ) : (
+        <div>
+          <button type="submit" disabled={pending} className={primaryButton}>
+            {pending ? "Saving…" : submitLabel}
+          </button>
+        </div>
+      )}
     </form>
   );
 }

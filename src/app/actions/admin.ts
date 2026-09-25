@@ -67,8 +67,8 @@ function parseSpecs(raw: string) {
 }
 
 export async function saveProduct(_: AdminFormState, form: FormData): Promise<AdminFormState> {
-  await assertAdmin();
   const id = text(form, "id", 40) || null;
+  await assertAdmin(id ? "products.edit" : "products.create");
   const existing = id ? await db.product.findUnique({ where: { id }, select: { slug: true, image: true, gallery: true } }) : null;
   if (id && !existing) return { error: "This product no longer exists." };
 
@@ -140,7 +140,7 @@ export async function saveProduct(_: AdminFormState, form: FormData): Promise<Ad
 }
 
 export async function toggleProductStatus(id: string) {
-  await assertAdmin();
+  await assertAdmin("products.edit");
   const p = await db.product.findUnique({ where: { id }, select: { status: true, slug: true } });
   if (!p) return;
   await db.product.update({ where: { id }, data: { status: p.status === "ACTIVE" ? "DRAFT" : "ACTIVE" } });
@@ -151,7 +151,7 @@ export async function toggleProductStatus(id: string) {
 // ---------- orders ----------
 
 export async function updateOrderStatus(orderId: string, _: AdminFormState, form: FormData): Promise<AdminFormState> {
-  const admin = await assertAdmin();
+  const admin = await assertAdmin("orders.edit");
   const next = text(form, "status", 20) as OrderStatus;
   if (!(Object.values(OrderStatus) as string[]).includes(next)) return { error: "Unknown status." };
   // Optional tracking sent along with "Shipped", so the Shipped email can include it.
@@ -189,7 +189,7 @@ export async function updateOrderStatus(orderId: string, _: AdminFormState, form
 
 /** Sends a queued or failed order email again, now. */
 export async function retryOrderEmail(emailId: string) {
-  await assertAdmin();
+  await assertAdmin("orders.edit");
   // An admin retry gets a fresh set of attempts.
   const row = await db.orderEmail.update({ where: { id: emailId }, data: { attempts: 0 }, select: { orderId: true, sentAt: true } });
   if (!row.sentAt) await deliverOrderEmail(emailId);
@@ -198,7 +198,7 @@ export async function retryOrderEmail(emailId: string) {
 
 /** Purchase orders and bank transfers are marked paid by hand; card payments only through Stripe. */
 export async function markOrderPaid(orderId: string) {
-  const admin = await assertAdmin();
+  const admin = await assertAdmin("orders.edit");
   const res = await db.order.updateMany({
     where: { id: orderId, paymentStatus: "UNPAID", paymentMethod: { not: "CREDIT_CARD" }, status: { not: "CANCELLED" } },
     data: { paymentStatus: "PAID" },
@@ -211,7 +211,7 @@ export async function markOrderPaid(orderId: string) {
 // ---------- quotes ----------
 
 export async function updateQuoteStatus(quoteId: string, _: AdminFormState, form: FormData): Promise<AdminFormState> {
-  await assertAdmin();
+  await assertAdmin("quotes.edit");
   const next = text(form, "status", 20) as QuoteStatus;
   if (!(Object.values(QuoteStatus) as string[]).includes(next)) return { error: "Unknown status." };
   const res = await db.quote.updateMany({ where: { id: quoteId }, data: { status: next } });
@@ -226,7 +226,7 @@ export async function updateQuoteStatus(quoteId: string, _: AdminFormState, form
  * ("Custom quote — Category (qty N)", $0) to be priced with the customer; the quote becomes WON.
  */
 export async function convertQuoteToOrder(quoteId: string) {
-  const admin = await assertAdmin();
+  const admin = await assertAdmin("quotes.edit", "orders.edit");
   const orderId = await db.$transaction(async (tx) => {
     const q = await tx.quote.findUnique({ where: { id: quoteId }, include: { category: { select: { name: true } } } });
     if (!q) return null;
@@ -270,7 +270,7 @@ export async function convertQuoteToOrder(quoteId: string) {
 // ---------- coupons ----------
 
 export async function createCoupon(_: AdminFormState, form: FormData): Promise<AdminFormState> {
-  await assertAdmin();
+  await assertAdmin("coupons.create");
   const code = text(form, "code", 30).toUpperCase();
   const percent = Number(text(form, "percent", 5));
   const fields: Record<string, string> = {};
@@ -284,7 +284,7 @@ export async function createCoupon(_: AdminFormState, form: FormData): Promise<A
 }
 
 export async function toggleCoupon(id: string) {
-  await assertAdmin();
+  await assertAdmin("coupons.edit");
   const c = await db.coupon.findUnique({ where: { id }, select: { active: true } });
   if (!c) return;
   await db.coupon.update({ where: { id }, data: { active: !c.active } });
@@ -292,7 +292,7 @@ export async function toggleCoupon(id: string) {
 }
 
 export async function deleteCoupon(id: string) {
-  await assertAdmin();
+  await assertAdmin("coupons.delete");
   await db.coupon.deleteMany({ where: { id } }); // orders keep the code as text
   revalidatePath("/admin/coupons");
 }
@@ -300,7 +300,7 @@ export async function deleteCoupon(id: string) {
 // ---------- email jobs ----------
 
 export async function runEmailJobsNow(): Promise<AdminFormState> {
-  await assertAdmin();
+  await assertAdmin("settings.edit");
   const r = await runEmailJobs();
   revalidatePath("/admin");
   if ("skipped" in r) return { error: "The email jobs are already running; try again in a moment." };

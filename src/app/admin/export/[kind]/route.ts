@@ -7,9 +7,14 @@ import { db } from "@/lib/db";
 
 const paymentLabel = { CREDIT_CARD: "Credit card", PURCHASE_ORDER: "Purchase order", BANK_TRANSFER: "Bank transfer" } as const;
 
+// Each export needs its own permission (Phase 14); anyone else gets the same 404 as an unknown export.
+const PERMISSION = { products: "products.export", orders: "orders.export", customers: "customers.export" } as const;
+
 export async function GET(request: Request, { params }: { params: Promise<{ kind: string }> }) {
-  if (!(await getAdmin())) return new Response("Not found", { status: 404 });
   const { kind } = await params;
+  if (!Object.hasOwn(PERMISSION, kind) || !(await getAdmin(PERMISSION[kind as keyof typeof PERMISSION]))) {
+    return new Response("Not found", { status: 404 });
+  }
   const sp = new URL(request.url).searchParams;
   const day = new Date().toISOString().slice(0, 10);
 

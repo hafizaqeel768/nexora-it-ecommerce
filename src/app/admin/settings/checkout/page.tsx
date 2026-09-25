@@ -2,6 +2,7 @@ import { saveCheckoutSettings } from "@/app/actions/settings";
 import { Field } from "@/components/account/field";
 import { ActionForm } from "@/components/admin/action-form";
 import { card, CheckField, SectionTitle, select } from "@/components/admin/ui";
+import { can } from "@/lib/acl";
 import { requireAdminPage } from "@/lib/admin";
 import { getConfig } from "@/lib/config";
 import { COUNTRIES } from "@/lib/countries";
@@ -9,10 +10,11 @@ import { COUNTRIES } from "@/lib/countries";
 export const metadata = { title: "Checkout & stock" };
 
 export default async function CheckoutSettingsPage() {
-  await requireAdminPage("/admin/settings/checkout");
+  const admin = await requireAdminPage("/admin/settings/checkout", "settings.view");
+  const ro = !can(admin, "settings.edit");
   const [c, inv] = await Promise.all([getConfig("checkout"), getConfig("inventory")]);
   return (
-    <ActionForm action={saveCheckoutSettings} submitLabel="Save checkout & stock" className="grid gap-4">
+    <ActionForm readOnly={ro} action={saveCheckoutSettings} submitLabel="Save checkout & stock" className="grid gap-4">
       <div className={card}>
         <SectionTitle>Checkout</SectionTitle>
         <div className="grid gap-3.5">

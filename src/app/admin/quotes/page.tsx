@@ -11,7 +11,7 @@ type Props = { searchParams: Promise<{ status?: string }> };
 // Quote requests (the prototype's a_quotes) from the home page form.
 export default async function AdminQuotes({ searchParams }: Props) {
   const sp = await searchParams;
-  await requireAdminPage("/admin/quotes");
+  await requireAdminPage("/admin/quotes", "quotes.view");
   const status = (Object.values(QuoteStatus) as string[]).includes(sp.status ?? "") ? (sp.status as QuoteStatus) : null;
 
   const [counts, quotes] = await Promise.all([

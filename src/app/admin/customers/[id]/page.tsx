@@ -8,6 +8,7 @@ import { OrderTable } from "@/components/admin/order-table";
 import { SwitchButton } from "@/components/admin/switch-button";
 import { card, cardTitle, Kpi, select } from "@/components/admin/ui";
 import { StatusBadge } from "@/components/status-badge";
+import { can } from "@/lib/acl";
 import { requireAdminPage } from "@/lib/admin";
 import { COUNTRIES } from "@/lib/countries";
 import { db } from "@/lib/db";
@@ -21,7 +22,8 @@ const pill = "rounded-pill px-2.5 py-0.5 text-12 font-bold";
 // editable contact details, private staff note and tax exemption.
 export default async function AdminCustomer({ params }: Props) {
   const { id } = await params;
-  await requireAdminPage(`/admin/customers/${id}`);
+  const admin = await requireAdminPage(`/admin/customers/${id}`, "customers.view");
+  const canEdit = can(admin, "customers.edit");
   const c = await db.customer.findUnique({
     where: { id },
     include: {
@@ -116,7 +118,7 @@ export default async function AdminCustomer({ params }: Props) {
         <div className="grid gap-4">
           <div className={card}>
             <h3 className={cardTitle}>Details</h3>
-            <ActionForm action={updateCustomer.bind(null, c.id)} submitLabel="Save customer">
+            <ActionForm action={updateCustomer.bind(null, c.id)} submitLabel="Save customer" readOnly={!canEdit}>
               <Field label="Name" name="name" defaultValue={c.name} />
               <Field label="Phone" name="phone" defaultValue={c.phone ?? ""} />
               <Field label="Address" name="line" defaultValue={c.addressLine ?? ""} />
@@ -150,7 +152,7 @@ export default async function AdminCustomer({ params }: Props) {
                 <small className="block text-12 text-muted">No tax at checkout when logged in</small>
               </span>
               {c.passwordHash ? (
-                <SwitchButton on={c.taxExempt} action={toggleTaxExempt.bind(null, c.id)} label={`${c.name}: ${c.taxExempt ? "tax-exempt" : "pays tax"}`} />
+                <SwitchButton readOnly={!canEdit} on={c.taxExempt} action={toggleTaxExempt.bind(null, c.id)} label={`${c.name}: ${c.taxExempt ? "tax-exempt" : "pays tax"}`} />
               ) : (
                 <span className="text-12 text-muted">Guests can&apos;t be exempt</span>
               )}
@@ -165,7 +167,18 @@ export default async function AdminCustomer({ params }: Props) {
                 </>
               )}
             </p>
-            {c.role === "ADMIN" && <p className="mt-2 text-12 text-muted">Admin rights are managed with the admin:promote command (Phase 16 adds staff roles here).</p>}
+            {c.role === "ADMIN" && (
+              <p className="mt-2 text-12 text-muted">
+                This is a staff account.{" "}
+                {can(admin, "admin_users.view") ? (
+                  <Link href={`/admin/users/${c.id}`} className="font-bold text-accent">
+                    Role and access: Admin users →
+                  </Link>
+                ) : (
+                  "Its role and access are managed under System → Admin users."
+                )}
+              </p>
+            )}
           </div>
         </div>
       </div>

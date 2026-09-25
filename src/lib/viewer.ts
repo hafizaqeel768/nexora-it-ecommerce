@@ -32,15 +32,21 @@ export const getViewer = cache(async () => {
       state: true,
       postalCode: true,
       country: true,
+      isSuperAdmin: true,
+      adminDisabledAt: true,
+      adminRole: { select: { id: true, name: true, permissions: true } },
       wishlistItems: { select: { productId: true }, orderBy: { createdAt: "desc" } },
     },
   });
   if (!customer?.passwordHash || !customer.registeredAt) return null;
   const changed = customer.passwordChangedAt ? Math.floor(customer.passwordChangedAt.getTime() / 1000) : 0;
   if (changed && (session.issuedAt ?? 0) < changed) return null;
-  const { passwordHash, passwordChangedAt, wishlistItems, ...rest } = customer;
+  // A disabled staff account is signed out everywhere at once (login is refused too, src/auth.ts).
+  if (customer.role === "ADMIN" && customer.adminDisabledAt) return null;
+  const { passwordHash, passwordChangedAt, adminDisabledAt, wishlistItems, ...rest } = customer;
   void passwordHash; // never handed to pages
   void passwordChangedAt;
+  void adminDisabledAt;
   return { ...rest, registeredAt: customer.registeredAt, wishlistIds: wishlistItems.map((w) => w.productId) };
 });
 

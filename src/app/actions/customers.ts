@@ -4,13 +4,17 @@
 import { revalidatePath } from "next/cache";
 import type { AdminFormState } from "@/app/actions/admin";
 import { assertAdmin } from "@/lib/admin";
+import { staffEditDenial } from "@/lib/admin-users";
 import { countryName, isCountryCode } from "@/lib/countries";
 import { db } from "@/lib/db";
 
 const text = (form: FormData, key: string, max: number) => String(form.get(key) ?? "").trim().slice(0, max);
 
 export async function updateCustomer(customerId: string, _: AdminFormState, form: FormData): Promise<AdminFormState> {
-  await assertAdmin();
+  const admin = await assertAdmin("customers.edit");
+  // A staff account's details can only be changed by someone allowed to manage that admin (Phase 14).
+  const denied = await staffEditDenial(admin, customerId);
+  if (denied) return { error: denied };
   const name = text(form, "name", 120);
   if (!name) return { error: "Name is required.", fields: { name: "Name is required." } };
   const code = text(form, "country", 2).toUpperCase();

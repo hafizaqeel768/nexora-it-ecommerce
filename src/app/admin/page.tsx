@@ -3,7 +3,10 @@ import { RunEmailJobsButton } from "@/components/admin/email-jobs";
 import { OrderTable } from "@/components/admin/order-table";
 import { RevenueChart } from "@/components/admin/revenue-chart";
 import { card, cardTitle, Kpi } from "@/components/admin/ui";
+import { redirect } from "next/navigation";
+import { can } from "@/lib/acl";
 import { requireAdminPage } from "@/lib/admin";
+import { sectionLinks } from "@/lib/admin-sections";
 import { db } from "@/lib/db";
 import { emailTransport } from "@/lib/email";
 import { MAX_EMAIL_ATTEMPTS } from "@/lib/order-emails";
@@ -16,7 +19,9 @@ const counted = { status: { not: "CANCELLED" as const } };
 // Dashboard (the prototype's a_dash): KPIs, revenue for the last 14 days, top products, recent orders, low stock.
 // Revenue counts every order that isn't cancelled, like the prototype.
 export default async function AdminDashboard() {
-  await requireAdminPage("/admin");
+  const admin = await requireAdminPage("/admin");
+  // Staff without the dashboard land on the first section they may open.
+  if (!can(admin, "dashboard.view")) redirect(Object.values(sectionLinks(admin))[0] ?? "/admin/forbidden");
   const { lowStockAt } = await getConfig("inventory");
 
   const since = new Date();
@@ -162,7 +167,7 @@ export default async function AdminDashboard() {
           The jobs retry order emails and send one reminder for carts left alone for {process.env.ABANDONED_CART_HOURS ?? 3} hours (confirmed emails
           only). They run every {process.env.JOBS_INTERVAL_MINUTES ?? "–"} minutes.
         </p>
-        <RunEmailJobsButton />
+        {can(admin, "settings.edit") && <RunEmailJobsButton />}
       </div>
     </>
   );

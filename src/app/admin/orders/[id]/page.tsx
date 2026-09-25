@@ -9,6 +9,7 @@ import { StatusForm } from "@/components/admin/status-form";
 import { card, cardTitle, CheckField, row, select, table, td, textButton, th } from "@/components/admin/ui";
 import { StatusBadge } from "@/components/status-badge";
 import { OrderStatus } from "@/generated/prisma/client";
+import { can } from "@/lib/acl";
 import { requireAdminPage } from "@/lib/admin";
 import { COUNTRIES } from "@/lib/countries";
 import { db } from "@/lib/db";
@@ -41,7 +42,10 @@ function TrackingFields({ carrier, number }: { carrier?: string | null; number?:
 // invoice/packing slip, internal notes and the activity timeline.
 export default async function AdminOrder({ params }: Props) {
   const { id } = await params;
-  await requireAdminPage(`/admin/orders/${id}`);
+  const admin = await requireAdminPage(`/admin/orders/${id}`, "orders.view");
+  // What this admin's role may change here (the actions check again).
+  const canEdit = can(admin, "orders.edit");
+  const canRefund = can(admin, "orders.refund");
   const order = await db.order.findUnique({
     where: { id },
     include: {
@@ -57,9 +61,9 @@ export default async function AdminOrder({ params }: Props) {
 
   const n = (d: { toString(): string }) => Number(d.toString());
   const cancelled = order.status === "CANCELLED";
-  const canMarkPaid = order.paymentStatus === "UNPAID" && order.paymentMethod !== "CREDIT_CARD" && !cancelled;
-  const editable = ["PENDING", "PROCESSING"].includes(order.status) && order.paymentStatus === "UNPAID" && order.paymentMethod !== "CREDIT_CARD";
-  const addressEditable = ["PENDING", "PROCESSING"].includes(order.status);
+  const canMarkPaid = canEdit && order.paymentStatus === "UNPAID" && order.paymentMethod !== "CREDIT_CARD" && !cancelled;
+  const editable = canEdit && ["PENDING", "PROCESSING"].includes(order.status) && order.paymentStatus === "UNPAID" && order.paymentMethod !== "CREDIT_CARD";
+  const addressEditable = canEdit && ["PENDING", "PROCESSING"].includes(order.status);
   const refundable = order.paymentStatus === "PAID" || order.paymentStatus === "PARTIALLY_REFUNDED";
   const remaining = Math.round((n(order.total) - n(order.refundedTotal)) * 100) / 100;
   const track = trackingInfo(order.trackingCarrier, order.trackingNumber);
@@ -219,7 +223,7 @@ export default async function AdminOrder({ params }: Props) {
                 </div>
               </details>
             ) : (
-              <p className="mt-3 text-12 text-muted">Items can be edited while an order is pending or processing and unpaid (not for card payments).</p>
+              canEdit && <p className="mt-3 text-12 text-muted">Items can be edited while an order is pending or processing and unpaid (not for card payments).</p>
             )}
           </div>
 
@@ -240,9 +244,11 @@ export default async function AdminOrder({ params }: Props) {
 
           <div className={card}>
             <h3 className={cardTitle}>Activity & internal notes</h3>
-            <ActionForm action={addOrderNote.bind(null, order.id)} submitLabel="Add note" resetOnSuccess className="mb-4 grid gap-2">
-              <textarea name="body" rows={2} placeholder="Note for staff (the customer never sees it)…" aria-label="Internal note" className={fieldClass} />
-            </ActionForm>
+            {canEdit && (
+              <ActionForm action={addOrderNote.bind(null, order.id)} submitLabel="Add note" resetOnSuccess className="mb-4 grid gap-2">
+                <textarea name="body" rows={2} placeholder="Note for staff (the customer never sees it)…" aria-label="Internal note" className={fieldClass} />
+              </ActionForm>
+            )}
             {order.activity.length ? (
               <ol className="grid gap-2.5">
                 {order.activity.map((a) => (
@@ -265,6 +271,10 @@ export default async function AdminOrder({ params }: Props) {
             <h3 className={cardTitle}>Status</h3>
             {cancelled ? (
               <p className="text-14 text-muted">This order is cancelled; its stock was released. Cancelled orders are final.</p>
+            ) : !canEdit ? (
+              <p className="text-14">
+                {statusLabel(order.status)} <span className="block text-12 text-muted">View only: your role can&apos;t change orders.</span>
+              </p>
             ) : (
               <StatusForm
                 action={updateOrderStatus.bind(null, order.id)}
@@ -296,7 +306,7 @@ export default async function AdminOrder({ params }: Props) {
                   )}
                 </p>
               )}
-              <ActionForm action={saveTracking.bind(null, order.id)} submitLabel="Save tracking">
+              <ActionForm action={saveTracking.bind(null, order.id)} submitLabel="Save tracking" readOnly={!canEdit}>
                 <TrackingFields carrier={order.trackingCarrier} number={order.trackingNumber} />
                 {order.status === "SHIPPED" && <CheckField name="notify" label="Email the customer the Shipped email with this tracking" defaultChecked />}
               </ActionForm>
@@ -317,7 +327,7 @@ export default async function AdminOrder({ params }: Props) {
                 {r.restocked && <span className="block text-muted">Order cancelled, items back in stock</span>}
               </div>
             ))}
-            {refundable && remaining > 0 ? (
+            {refundable && remaining > 0 && canRefund ? (
               <details className="mt-3">
                 <summary className="cursor-pointer text-13 font-bold text-accent">Refund…</summary>
                 <div className="mt-3">
@@ -379,11 +389,13 @@ export default async function AdminOrder({ params }: Props) {
                     ) : (
                       <span className="flex items-center gap-2">
                         <span className={e.error ? "text-[#dc2626]" : ""}>{e.error ? `Failed (${e.attempts}×)` : "Queued"}</span>
-                        <form action={retryOrderEmail.bind(null, e.id)}>
-                          <button type="submit" className={textButton}>
-                            Retry
-                          </button>
-                        </form>
+                        {canEdit && (
+                          <form action={retryOrderEmail.bind(null, e.id)}>
+                            <button type="submit" className={textButton}>
+                              Retry
+                            </button>
+                          </form>
+                        )}
                       </span>
                     )}
                   </div>

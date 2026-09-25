@@ -17,10 +17,13 @@ const nextAuth = NextAuth({
         if (!email || !password) return null;
         const customer = await db.customer.findUnique({
           where: { email },
-          select: { id: true, name: true, email: true, passwordHash: true },
+          select: { id: true, name: true, email: true, passwordHash: true, role: true, adminDisabledAt: true },
         });
         const ok = await verifyPassword(password, customer?.passwordHash ?? DUMMY_HASH);
         if (!customer?.passwordHash || !ok) return null;
+        // Disabled staff accounts can't log in (same answer as a wrong password).
+        if (customer.role === "ADMIN" && customer.adminDisabledAt) return null;
+        await db.customer.update({ where: { id: customer.id }, data: { lastLoginAt: new Date() }, select: { id: true } });
         return { id: customer.id, name: customer.name, email: customer.email };
       },
     }),
