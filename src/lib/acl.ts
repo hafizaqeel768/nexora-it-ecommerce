@@ -28,6 +28,16 @@ export const PERMISSION_GROUPS = [
     ],
   },
   {
+    key: "attributes",
+    label: "Product attributes",
+    permissions: [
+      ["attributes.view", "View product attributes"],
+      ["attributes.create", "Create attributes"],
+      ["attributes.edit", "Edit and disable attributes and their options"],
+      ["attributes.delete", "Delete unused attributes"],
+    ],
+  },
+  {
     key: "reviews",
     label: "Reviews",
     permissions: [

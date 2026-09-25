@@ -585,3 +585,57 @@ model ImportJob {
 
   @@index([createdAt])
 }
+
+/// Phase 16: how an attribute is entered and stored. Fixed once the attribute exists.
+enum AttributeType {
+  TEXT
+  TEXTAREA
+  NUMBER
+  BOOLEAN
+  SELECT
+  MULTISELECT
+  DATE
+  PRICE
+}
+
+/// Product attribute (Phase 16), configured in Admin → Catalog → Attributes, e.g. RAM, Processor, Screen size.
+/// Values per product and attribute sets come in Phase 17 (one value table, no column per attribute).
+model Attribute {
+  id            String            @id @default(cuid())
+  /// Unique, lowercase a–z, 0–9 and _, starting with a letter (e.g. screen_size). Fixed once created.
+  code          String            @unique
+  name          String
+  type          AttributeType
+  required      Boolean           @default(false)
+  /// Default for text, textarea, number, price, boolean ("yes"/"no") and date (YYYY-MM-DD).
+  /// Select and multi-select use AttributeOption.isDefault instead.
+  defaultValue  String?
+  /// Shown after number values, e.g. "GB" or "in"
+  unit          String?
+  active        Boolean           @default(true)
+  sortOrder     Int               @default(0)
+  description   String?
+  /// Listed in the product page's specifications (Phase 17)
+  showOnProduct Boolean           @default(true)
+  options       AttributeOption[]
+  createdAt     DateTime          @default(now())
+  updatedAt     DateTime          @updatedAt
+
+  @@index([active, sortOrder])
+}
+
+/// Choice of a select / multi-select attribute, e.g. RAM → 8 GB, 16 GB, 32 GB.
+model AttributeOption {
+  id          String    @id @default(cuid())
+  attributeId String
+  attribute   Attribute @relation(fields: [attributeId], references: [id], onDelete: Cascade)
+  label       String
+  sortOrder   Int       @default(0)
+  /// Disabled options stay on products that already use them but can't be chosen any more
+  active      Boolean   @default(true)
+  /// Preselected on new products (select: at most one)
+  isDefault   Boolean   @default(false)
+
+  @@unique([attributeId, label])
+  @@index([attributeId, sortOrder])
+}

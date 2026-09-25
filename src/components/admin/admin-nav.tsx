@@ -11,7 +11,7 @@ const NAV = [
     href: "/admin/products",
     label: "Products",
     title: "Catalog",
-    also: ["/admin/categories", "/admin/brands"],
+    also: ["/admin/categories", "/admin/brands", "/admin/attributes"],
     icon: (
       <>
         <path d="M21 8 12 3 3 8v8l9 5 9-5z" />

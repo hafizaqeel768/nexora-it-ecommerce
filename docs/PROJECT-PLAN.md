@@ -31,6 +31,7 @@ nextjs-ecommerce/
 │   ├── PHASE-13-ORDERS.md            ← order editing, refunds, tracking, invoices/packing slips, notes, customer page
 │   ├── PHASE-14-ADMIN-ACL.md         ← admin users, roles, permissions, protected super admin, audit log
 │   ├── PHASE-15-IMPORT-EXPORT.md     ← Data Transfer: import/export framework (products, categories, customers, orders export)
+│   ├── PHASE-16-ATTRIBUTES.md        ← configurable product attributes and their options
 │   └── kijero-products.json          ← real product catalog (299 entries) used by the seed
 ├── media/
 │   ├── products/                     ← real product photos
@@ -151,7 +152,7 @@ coupons are not part of the new plan; they can be added later.
 ### Phase 15 — Import / export framework ✅ (docs/PHASE-15-IMPORT-EXPORT.md)
 - One reusable framework for products, categories, customers (import + export) and orders (export; import only if it can be done safely): sample CSVs, validation, preview, confirm, result with error CSV, filtered streaming exports
 
-### Phase 16 — Product attributes
+### Phase 16 — Product attributes ✅ (docs/PHASE-16-ATTRIBUTES.md)
 - Configurable attributes (text, number, boolean, select, multi-select, …) with options
 
 ### Phase 17 — Attribute sets

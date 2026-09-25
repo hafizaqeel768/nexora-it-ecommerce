@@ -9,6 +9,7 @@ export const CATALOG_TABS: Link[] = [
   { href: "/admin/products", label: "Products", permission: "products.view" },
   { href: "/admin/categories", label: "Categories", permission: "categories.view" },
   { href: "/admin/brands", label: "Brands", permission: "products.view" },
+  { href: "/admin/attributes", label: "Attributes", permission: "attributes.view" },
   { href: "/admin/data-transfer/import?entity=products", label: "Import CSV", permission: ["import.access", "products.import"] },
 ];
 
