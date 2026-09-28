@@ -7,7 +7,7 @@ This WSL + Docker setup is shared with other projects (e.g. laravel-ecommerce, o
 - Before using ANY port, check it's free: `docker ps -a` (including stopped containers), `ss -tulpn`, and Windows-side listeners.
 - If a port is busy or reserved by another project (even a stopped container), DO NOT use it. Pick the next free port, verify it, and use that instead.
 - Never stop, remove, or reconfigure another project's container to free a port.
-- Record every chosen port in docs/PHASE-0-ENVIRONMENT.md.
+- Record every chosen port in docs/NEXORA-DOCUMENTATION.md.
 
 ## Current agreed ports (from Phase 0)
 - Next.js dev server: 3100 (runs in the nexora_app container, not in WSL)

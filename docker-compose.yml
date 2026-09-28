@@ -3,7 +3,7 @@
 #   db  → nexora_pg  (PostgreSQL 17, 127.0.0.1:5432)
 #   mail → nexora_mailpit (Mailpit inbox for dev email, http://localhost:8025)
 # Service keys (app, db) are scoped to this project; all Docker-level names carry the nexora_ prefix.
-# Names and ports verified free in docs/PHASE-0-ENVIRONMENT.md. Credentials come from .env (git-ignored).
+# Names and ports verified free in docs/NEXORA-DOCUMENTATION.md. Credentials come from .env (git-ignored).
 name: nexora
 
 services:

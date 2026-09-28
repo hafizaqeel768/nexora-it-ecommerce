@@ -1,6 +1,6 @@
 // Nexora IT — data model (Phase 5).
-// Shapes follow design/nexora-full-with-admin.html (products, variants, bulk tiers, reviews, orders,
-// quotes, coupons, wishlist) and docs/kijero-products.json (the real catalog).
+// Shapes follow the original HTML prototype (products, variants, bulk tiers, reviews, orders,
+// quotes, coupons, wishlist) and prisma/seed-data/kijero-products.json (the real catalog).
 
 generator client {
   provider = "prisma-client"

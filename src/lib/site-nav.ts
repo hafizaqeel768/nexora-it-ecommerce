@@ -1,4 +1,4 @@
-// Navigation for the header and footer, mirroring design/nexora-full-with-admin.html. Categories come from the
+// Navigation for the header and footer, mirroring the original HTML prototype. Categories come from the
 // database since Phase 12 (src/lib/categories.ts); the prototype's hash routes map to real routes here.
 
 export type CategoryIcon =

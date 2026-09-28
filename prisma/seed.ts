@@ -2,7 +2,7 @@
 // and seed-owned rows (sample variants/tiers/reviews, demo orders) are replaced.
 //
 // Sources:
-//   docs/kijero-products.json                 real catalog (299 entries) → images in media/products/
+//   prisma/seed-data/kijero-products.json  real catalog (299 entries) → images in media/products/
 //   prisma/seed-data/prototype-samples.json   14 sample products + demo data extracted from the prototype
 //
 // Run: docker compose exec app npx prisma db seed
@@ -147,7 +147,7 @@ function conditionOf(raw: string): ProductCondition {
 }
 
 async function seedCatalog(categoryIds: Map<string, string>, usedSlugs: Set<string>) {
-  const { products } = readJson<{ products: CatalogProduct[] }>("docs/kijero-products.json");
+  const { products } = readJson<{ products: CatalogProduct[] }>("prisma/seed-data/kijero-products.json");
   const seenSku = new Set<string>();
   const report = { created: 0, duplicates: [] as string[], missingImages: [] as string[] };
 
