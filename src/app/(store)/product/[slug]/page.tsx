@@ -77,7 +77,7 @@ export default async function ProductPage({ params }: Props) {
   if (!product) notFound();
   const [related, viewer, reviewSettings] = await Promise.all([getRelated(product), getViewer(), getConfig("reviews")]);
 
-  // Who may write a review here, and the customer's own review (it may still be waiting for approval).
+  // Who may write a review here, and the customer's own review (it may still be waiting for approval)..
   let access: ReviewAccess = { mode: "off", productId: product.id, slug: product.slug, own: null };
   if (reviewSettings.enabled) {
     if (!viewer) access = { ...access, mode: "login" };
